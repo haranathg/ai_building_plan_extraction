@@ -42,57 +42,62 @@ EMBEDDING_MODEL=bge-large-en-v1.5             # embedding model for local LM Stu
 
 ---
 
-## 2. Extract Vector Plan Data
+## 2. Enhanced Workflow (Recommended)
 
+### Step 1: Extract Components
 ```bash
-source .venv/bin/activate
-python scripts/extract_vector_plan.py \
-    --pdf data/House-Floor-Plans-vector.pdf \
-    --summary
+python scripts/extract_compliance_components.py \
+    --pdf data/House-Floor-Plans-vector.pdf
 ```
 
-Outputs:
-- `data/House-Floor-Plans-vector_output.json` – structured geometry/text extraction.
-- `data/House-Floor-Plans-vector_summary.json` – quick summary preview (rooms, dimensions, sheet titles).
+**Output:** `data/House-Floor-Plans-vector_components.json`
 
----
+Extracts:
+- Rooms with dimensions & areas
+- Setbacks (annotated + geometric)
+- Openings (doors/windows)
+- Parking spaces
+- Stairs/ramps
+- Fire safety features
+- Accessibility features
+- Heights/levels
+- Building envelope
 
-## 3. Run Compliance Check
-
-This script pulls rules from Neo4j, optionally uses OpenAI embeddings (or Pinecone) for semantic scores, and writes a compliance report JSON.
-
+### Step 2: Check Compliance
 ```bash
-python scripts/check_plan_compliance_neo4j.py \
-    --plan data/House-Floor-Plans-vector_output.json \
-    --use-openai              # omit to rely on local LM Studio embeddings
-    # --pinecone              # optional: query Pinecone if no OpenAI fallback
-    # --writeback             # optional: push results back into Neo4j
+python scripts/check_component_compliance.py \
+    --components data/House-Floor-Plans-vector_components.json \
+    --top-k 2
 ```
 
-Outputs:
-- `data/House-Floor-Plans-vector_compliance.json`
+**Output:** `data/House-Floor-Plans-vector_compliance.json`
 
-Environment values used:
-- `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`
-- `OPENAI_API_KEY` *(or LM Studio via `LOCAL_LLM_BASE_URL` when `USE_OPENAI=0`)*
-- `PINECONE_API_KEY` *(only if `--pinecone` flag is set)*
+For each component:
+- Queries Pinecone for top 2 semantically similar rules
+- Queries Neo4j for keyword-matched rules
+- Evaluates component attributes against rule requirements
+- Generates PASS/FAIL/REVIEW status with confidence scores
 
----
-
-## 4. Generate a PDF Report (optional)
-
+### Step 3: Generate Report
 ```bash
-python scripts/generate_compliance_report.py \
-    --plan data/House-Floor-Plans-vector_output.json \
+python scripts/generate_enhanced_compliance_report.py \
+    --components data/House-Floor-Plans-vector_components.json \
     --compliance data/House-Floor-Plans-vector_compliance.json \
-    --output reports/House-Floor-Plans-vector_report.pdf
+    --output reports/House-Floor-Plans-enhanced_report.pdf
 ```
 
-Result: `reports/House-Floor-Plans-vector_report.pdf`
+**Output:** Comprehensive PDF compliance report
+
+Report includes:
+- Executive summary with pass/fail statistics
+- Component extraction overview
+- Detailed findings by component type
+- Recommendations and action items
+- Color-coded compliance status
 
 ---
 
-## 5. Useful Tips
+## 3. Useful Tips
 
 - **Check connections**: the compliance script will fail fast if Neo4j/OpenAI/Pinecone credentials are missing. Use the same `.env` in each repo that shares the rule knowledge base.
 - **Local LM Studio**: if running offline, keep the API server running with both models loaded (`LLM_MODEL` for chat and `EMBEDDING_MODEL` for embeddings).
@@ -103,10 +108,35 @@ Result: `reports/House-Floor-Plans-vector_report.pdf`
 
 ## Summary of Scripts
 
+### Current Scripts (Recommended)
+
 | Script | Purpose |
 | ------ | ------- |
-| `scripts/extract_vector_plan.py` | Extracts geometry & text from vector PDFs, optionally summarises. |
-| `scripts/check_plan_compliance_neo4j.py` | Compares the extracted plan JSON against Neo4j rules; can use OpenAI/Pinecone scoring. |
-| `scripts/generate_compliance_report.py` | Generates a PDF report using the extracted plan data and compliance results. |
+| `scripts/extract_compliance_components.py` | Extracts compliance-ready components (rooms, setbacks, openings, etc.) with geometric analysis. |
+| `scripts/check_component_compliance.py` | Component-based compliance checking using Pinecone + Neo4j with intelligent matching. |
+| `scripts/generate_enhanced_compliance_report.py` | Professional PDF reports with executive summary, detailed findings, and recommendations. |
 
-This README should guide you through the full pipeline using the sample plan. Feel free to adapt the commands for new plans or integrate the scripts into larger automation workflows.
+### Legacy Scripts (scripts/legacy/)
+
+The following scripts are deprecated and kept for reference only:
+
+| Script | Purpose |
+| ------ | ------- |
+| `scripts/legacy/extract_vector_plan.py` | Extracts raw geometry & text from vector PDFs (text-based extraction). |
+| `scripts/legacy/check_plan_compliance_neo4j.py` | Text-based compliance checking (less accurate than component-based approach). |
+| `scripts/legacy/generate_compliance_report.py` | Basic PDF report generation (replaced by enhanced version). |
+
+---
+
+## Component Extraction Features
+
+See **[COMPONENT_EXTRACTION_GUIDE.md](COMPONENT_EXTRACTION_GUIDE.md)** for complete documentation.
+
+**Key Advantages:**
+- ✅ Geometric setback calculation (works without annotations)
+- ✅ Room area calculation from dimensions
+- ✅ Component-type classification for intelligent rule matching
+- ✅ 50+ component subtypes detected
+- ✅ All measurements in consistent units (feet)
+
+This README guides you through the enhanced pipeline. The new component-based approach provides better compliance checking accuracy and more detailed analysis than the legacy text-based extraction.
