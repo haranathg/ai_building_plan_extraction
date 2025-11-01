@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+.env
+.env.*
+env/
+venv/
+.venv/
+
+.DS_Store
+*.pdf
+*.PDF
+
+# Generated analysis outputs
+data/**/*.json
+reports/**/*.json
