@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source:*)",
+      "Bash(python scripts/extract_compliance_components.py:*)",
+      "Bash(python scripts/check_component_compliance.py:*)",
+      "Bash(python scripts/generate_enhanced_compliance_report.py:*)",
+      "Bash(tree:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(open:*)",
+      "Bash(python3:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
