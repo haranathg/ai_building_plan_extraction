@@ -273,6 +273,110 @@ class NorthPointer:
         return asdict(self)
 
 
+# =============================================================================
+# Documentation & Administrative Elements
+# =============================================================================
+
+@dataclass
+class TitleBlock:
+    """Represents title block information."""
+    drawing_number: Optional[str] = None
+    drawing_title: Optional[str] = None
+    revision_number: Optional[str] = None
+    revision_date: Optional[str] = None
+    drawing_date: Optional[str] = None
+    project_name: Optional[str] = None
+    project_address: Optional[str] = None
+    architect_name: Optional[str] = None
+    engineer_name: Optional[str] = None
+    professional_stamp_found: bool = False
+    license_number: Optional[str] = None
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass
+class Legend:
+    """Represents legend/symbol key on plan."""
+    found: bool
+    location: Optional[Tuple[float, float]] = None
+    symbol_count: int = 0
+    symbols: List[str] = None
+
+    def __post_init__(self):
+        if self.symbols is None:
+            self.symbols = []
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass
+class Schedule:
+    """Represents material/finish/equipment schedules."""
+    schedule_type: str  # material, finish, door, window, equipment, etc.
+    found: bool
+    item_count: int = 0
+    items: List[Dict[str, str]] = None
+    location: Optional[Tuple[float, float]] = None
+
+    def __post_init__(self):
+        if self.items is None:
+            self.items = []
+
+    def to_dict(self):
+        return {
+            "schedule_type": self.schedule_type,
+            "found": self.found,
+            "item_count": self.item_count,
+            "items": self.items[:10] if self.items else [],  # Limit to first 10 items
+            "location": self.location
+        }
+
+
+# =============================================================================
+# Technical Building Elements
+# =============================================================================
+
+@dataclass
+class StructuralElement:
+    """Represents structural elements like beams, columns."""
+    element_type: str  # beam, column, load_bearing_wall, footing
+    identifier: Optional[str] = None
+    dimensions: Optional[str] = None
+    material: Optional[str] = None
+    location: Optional[Tuple[float, float]] = None
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass
+class MEPElement:
+    """Represents MEP (Mechanical, Electrical, Plumbing) elements."""
+    system_type: str  # electrical, plumbing, hvac
+    element_type: str  # outlet, switch, fixture, vent, etc.
+    identifier: Optional[str] = None
+    location: Optional[Tuple[float, float]] = None
+    specifications: Optional[str] = None
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass
+class DrawingNote:
+    """Represents drawing notes and specifications."""
+    note_type: str  # general, construction, specification, code_reference
+    text: str
+    location: Optional[Tuple[float, float]] = None
+    reference_number: Optional[str] = None
+
+    def to_dict(self):
+        return asdict(self)
+
+
 @dataclass
 class ComplianceComponents:
     """Container for all extracted compliance components."""
@@ -296,6 +400,14 @@ class ComplianceComponents:
     adjacent_properties: List[AdjacentProperty] = None
     water_features: List[WaterFeature] = None
     north_pointer: Optional[NorthPointer] = None
+    # Documentation & administrative
+    title_block: Optional[TitleBlock] = None
+    legend: Optional[Legend] = None
+    schedules: List[Schedule] = None
+    # Technical building elements
+    structural_elements: List[StructuralElement] = None
+    mep_elements: List[MEPElement] = None
+    drawing_notes: List[DrawingNote] = None
 
     def __post_init__(self):
         if self.rooms is None:
@@ -324,6 +436,14 @@ class ComplianceComponents:
             self.adjacent_properties = []
         if self.water_features is None:
             self.water_features = []
+        if self.schedules is None:
+            self.schedules = []
+        if self.structural_elements is None:
+            self.structural_elements = []
+        if self.mep_elements is None:
+            self.mep_elements = []
+        if self.drawing_notes is None:
+            self.drawing_notes = []
 
     def to_dict(self):
         return {
@@ -346,7 +466,15 @@ class ComplianceComponents:
             "lot_info": self.lot_info.to_dict() if self.lot_info else None,
             "adjacent_properties": [ap.to_dict() for ap in self.adjacent_properties],
             "water_features": [wf.to_dict() for wf in self.water_features],
-            "north_pointer": self.north_pointer.to_dict() if self.north_pointer else None
+            "north_pointer": self.north_pointer.to_dict() if self.north_pointer else None,
+            # Documentation & administrative
+            "title_block": self.title_block.to_dict() if self.title_block else None,
+            "legend": self.legend.to_dict() if self.legend else None,
+            "schedules": [s.to_dict() for s in self.schedules],
+            # Technical building elements
+            "structural_elements": [se.to_dict() for se in self.structural_elements],
+            "mep_elements": [me.to_dict() for me in self.mep_elements],
+            "drawing_notes": [dn.to_dict() for dn in self.drawing_notes]
         }
 
 
@@ -1198,6 +1326,233 @@ class ComponentExtractor:
         # but for now, just check text
         return NorthPointer(found=False)
 
+    # =========================================================================
+    # Documentation & Administrative Elements Extraction
+    # =========================================================================
+
+    def extract_title_block(self) -> Optional[TitleBlock]:
+        """Extract title block information."""
+        title_block = TitleBlock()
+
+        # Common title block patterns
+        patterns = {
+            'drawing_number': r'(?:DWG|DRAWING|PROJECT)\s*(?:NO|#|NUM)[\s:.]*([A-Z0-9\-]+)',
+            'revision': r'(?:REV|REVISION)[\s:.]*([A-Z0-9\-]+)',
+            'date': r'(?:DATE|DRAWN)[\s:.]*([\d/\-]+)',
+            'project_name': r'(?:PROJECT|PROJ)[\s:.]*([^\n]{5,50})',
+            'architect': r'(?:ARCHITECT|ARCH)[\s:.]*([^\n]{5,50})',
+            'engineer': r'(?:ENGINEER|ENG)[\s:.]*([^\n]{5,50})',
+            'license': r'(?:LIC|LICENSE)\s*(?:NO|#)?[\s:.]*([A-Z0-9\-]+)'
+        }
+
+        # Scan all text blocks (title blocks usually in bottom-right or right edge)
+        for block in self.text_blocks:
+            text = block["text"]
+            text_upper = text.upper()
+
+            # Check for drawing number
+            if not title_block.drawing_number:
+                match = re.search(patterns['drawing_number'], text_upper, re.IGNORECASE)
+                if match:
+                    title_block.drawing_number = match.group(1)
+
+            # Check for revision
+            if not title_block.revision_number and "REV" in text_upper:
+                match = re.search(patterns['revision'], text_upper, re.IGNORECASE)
+                if match:
+                    title_block.revision_number = match.group(1)
+
+            # Check for dates
+            if not title_block.drawing_date and "DATE" in text_upper:
+                match = re.search(patterns['date'], text, re.IGNORECASE)
+                if match:
+                    title_block.drawing_date = match.group(1)
+
+            # Check for professional stamp indicators
+            if any(kw in text_upper for kw in ["SEAL", "STAMP", "REGISTERED", "PROFESSIONAL"]):
+                title_block.professional_stamp_found = True
+
+            # Check for license number
+            if not title_block.license_number and "LIC" in text_upper:
+                match = re.search(patterns['license'], text_upper, re.IGNORECASE)
+                if match:
+                    title_block.license_number = match.group(1)
+
+        # Return title block if we found any information
+        if any([title_block.drawing_number, title_block.revision_number,
+                title_block.drawing_date, title_block.professional_stamp_found]):
+            return title_block
+        return None
+
+    def extract_legend(self) -> Optional[Legend]:
+        """Detect and extract legend/symbol key."""
+        # Look for legend keywords
+        legend_keywords = ["LEGEND", "SYMBOLS", "KEY", "NOTES"]
+
+        for block in self.text_blocks:
+            text_upper = block["text"].upper()
+            if any(kw in text_upper for kw in legend_keywords):
+                # Found a legend
+                nearby = find_nearby_text(block, self.text_blocks, radius=200)
+                symbols = [b["text"] for b in nearby if len(b["text"]) < 50]
+
+                return Legend(
+                    found=True,
+                    location=(block["x"], block["y"]),
+                    symbol_count=len(symbols),
+                    symbols=symbols[:20]  # Limit to 20 symbols
+                )
+
+        return Legend(found=False)
+
+    def extract_schedules(self) -> List[Schedule]:
+        """Extract material/finish/door/window schedules."""
+        schedules = []
+        schedule_types = {
+            "DOOR": "door",
+            "WINDOW": "window",
+            "MATERIAL": "material",
+            "FINISH": "finish",
+            "FIXTURE": "fixture",
+            "EQUIPMENT": "equipment",
+            "ROOM FINISH": "room_finish"
+        }
+
+        for block in self.text_blocks:
+            text_upper = block["text"].upper()
+
+            # Check if this looks like a schedule header
+            for keyword, schedule_type in schedule_types.items():
+                if keyword in text_upper and "SCHEDULE" in text_upper:
+                    # Found a schedule
+                    nearby = find_nearby_text(block, self.text_blocks, radius=300)
+                    items = []
+
+                    # Extract schedule items (simple approach - look for numbered/lettered items)
+                    for nb in nearby:
+                        if re.match(r'^[A-Z0-9]{1,3}[\s\-\.]', nb["text"]):
+                            items.append({"identifier": nb["text"][:20]})
+
+                    schedules.append(Schedule(
+                        schedule_type=schedule_type,
+                        found=True,
+                        item_count=len(items),
+                        items=items[:10],  # Limit to 10 items
+                        location=(block["x"], block["y"])
+                    ))
+                    break  # Only count this schedule once
+
+        return schedules
+
+    def extract_structural_elements(self) -> List[StructuralElement]:
+        """Extract structural elements like beams, columns."""
+        elements = []
+        structural_keywords = {
+            "BEAM": "beam",
+            "COLUMN": "column",
+            "COL": "column",
+            "FOOTING": "footing",
+            "FTG": "footing",
+            "WALL": "load_bearing_wall"
+        }
+
+        for block in self.text_blocks:
+            text_upper = block["text"].upper()
+
+            for keyword, element_type in structural_keywords.items():
+                if keyword in text_upper:
+                    # Extract identifier and dimensions if present
+                    identifier = block["text"][:30]
+                    dimensions = None
+
+                    # Look for dimension patterns nearby
+                    nearby = find_nearby_text(block, self.text_blocks, radius=50)
+                    for nb in nearby:
+                        if re.search(r'\d+["\']?\s*x\s*\d+["\']?', nb["text"], re.IGNORECASE):
+                            dimensions = nb["text"][:30]
+                            break
+
+                    elements.append(StructuralElement(
+                        element_type=element_type,
+                        identifier=identifier,
+                        dimensions=dimensions,
+                        location=(block["x"], block["y"])
+                    ))
+                    break  # Only count once per block
+
+        # Limit to 50 structural elements to avoid over-extraction
+        return elements[:50]
+
+    def extract_mep_elements(self) -> List[MEPElement]:
+        """Extract MEP (Mechanical, Electrical, Plumbing) elements."""
+        elements = []
+        mep_keywords = {
+            # Electrical
+            "OUTLET": ("electrical", "outlet"),
+            "SWITCH": ("electrical", "switch"),
+            "LIGHT": ("electrical", "light_fixture"),
+            "PANEL": ("electrical", "panel"),
+            # Plumbing
+            "SINK": ("plumbing", "sink"),
+            "TOILET": ("plumbing", "toilet"),
+            "SHOWER": ("plumbing", "shower"),
+            "TUB": ("plumbing", "bathtub"),
+            # HVAC
+            "VENT": ("hvac", "vent"),
+            "HVAC": ("hvac", "unit"),
+            "AC": ("hvac", "air_conditioner"),
+            "FURNACE": ("hvac", "furnace")
+        }
+
+        for block in self.text_blocks:
+            text_upper = block["text"].upper()
+
+            for keyword, (system_type, element_type) in mep_keywords.items():
+                if keyword in text_upper:
+                    elements.append(MEPElement(
+                        system_type=system_type,
+                        element_type=element_type,
+                        identifier=block["text"][:30],
+                        location=(block["x"], block["y"])
+                    ))
+                    break  # Only count once per block
+
+        # Limit to 100 MEP elements
+        return elements[:100]
+
+    def extract_drawing_notes(self) -> List[DrawingNote]:
+        """Extract drawing notes and specifications."""
+        notes = []
+        note_keywords = {
+            "GENERAL NOTE": "general",
+            "CONSTRUCTION NOTE": "construction",
+            "SPECIFICATION": "specification",
+            "CODE": "code_reference",
+            "NOTE": "general"
+        }
+
+        for block in self.text_blocks:
+            text_upper = block["text"].upper()
+            text = block["text"]
+
+            # Check if this is a note
+            for keyword, note_type in note_keywords.items():
+                if keyword in text_upper:
+                    # Extract note number if present
+                    ref_match = re.match(r'(\d+)[\.\)]?\s*', text)
+                    reference_number = ref_match.group(1) if ref_match else None
+
+                    notes.append(DrawingNote(
+                        note_type=note_type,
+                        text=text[:200],  # Limit text length
+                        location=(block["x"], block["y"]),
+                        reference_number=reference_number
+                    ))
+                    break  # Only count once per block
+
+        # Limit to 50 notes
+        return notes[:50]
+
     def extract_all(self) -> ComplianceComponents:
         """Extract all components from the page."""
         log(f"Extracting components from sheet {self.page_number}...")
@@ -1221,6 +1576,16 @@ class ComponentExtractor:
         adjacent_properties = self.extract_adjacent_properties()
         water_features = self.extract_water_features()
         north_pointer = self.extract_north_pointer()
+
+        # Extract documentation & administrative elements
+        title_block = self.extract_title_block()
+        legend = self.extract_legend()
+        schedules = self.extract_schedules()
+
+        # Extract technical building elements
+        structural_elements = self.extract_structural_elements()
+        mep_elements = self.extract_mep_elements()
+        drawing_notes = self.extract_drawing_notes()
 
         # Extract general annotations (non-dimension text)
         annotations = []
@@ -1249,7 +1614,15 @@ class ComponentExtractor:
             lot_info=lot_info,
             adjacent_properties=adjacent_properties,
             water_features=water_features,
-            north_pointer=north_pointer
+            north_pointer=north_pointer,
+            # Documentation & administrative
+            title_block=title_block,
+            legend=legend,
+            schedules=schedules,
+            # Technical building elements
+            structural_elements=structural_elements,
+            mep_elements=mep_elements,
+            drawing_notes=drawing_notes
         )
 
         # Build log message
@@ -1270,6 +1643,22 @@ class ComponentExtractor:
             log_parts.append(f"{len(water_features)} water features")
         if north_pointer and north_pointer.found:
             log_parts.append(f"north pointer")
+
+        # Add documentation & administrative elements to log
+        if title_block:
+            log_parts.append(f"title block")
+        if legend and legend.found:
+            log_parts.append(f"legend ({legend.symbol_count} symbols)")
+        if schedules:
+            log_parts.append(f"{len(schedules)} schedules")
+
+        # Add technical elements to log
+        if structural_elements:
+            log_parts.append(f"{len(structural_elements)} structural elements")
+        if mep_elements:
+            log_parts.append(f"{len(mep_elements)} MEP elements")
+        if drawing_notes:
+            log_parts.append(f"{len(drawing_notes)} drawing notes")
 
         log(f"  Found: {', '.join(log_parts)}")
 

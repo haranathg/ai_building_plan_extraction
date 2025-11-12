@@ -166,10 +166,18 @@ def check_rule_relevance(
     component_type: str,
     component_data: Dict[str, Any],
     rule: RuleDetail,
-    openai_client: Optional[OpenAI]
+    openai_client: Optional[OpenAI],
+    plan_context: str = "unknown"
 ) -> tuple[bool, float, str]:
     """
     Use LLM to determine if a rule is actually relevant to a component.
+
+    Args:
+        component_type: Type of component being checked
+        component_data: Data about the component
+        rule: Rule to check relevance against
+        openai_client: OpenAI client for LLM calls
+        plan_context: "site_plan" or "building_plan" or "unknown"
 
     Returns:
         (is_relevant, confidence, reasoning)
@@ -202,8 +210,18 @@ def check_rule_relevance(
     if rule.topic:
         rule_desc += f" (Topic: {rule.topic})"
 
+    # Add plan context to prompt
+    context_note = ""
+    if plan_context == "site_plan":
+        context_note = """
+IMPORTANT CONTEXT: This is a SITE PLAN (lot layout), not a building floor plan.
+- REJECT rules about: dwelling houses, building work, building height, roofed areas, site cover, floor areas
+- ACCEPT rules about: lot sizes, setbacks from boundaries, environmental/water features, lot dimensions"""
+    elif plan_context == "building_plan":
+        context_note = "\nCONTEXT: This is a building floor plan."
+
     # Create prompt
-    prompt = f"""You are a building code compliance expert. Determine if the following building code rule is applicable and relevant to check against the given building component.
+    prompt = f"""You are a building code compliance expert. Determine if the following building code rule is applicable and relevant to check against the given component.{context_note}
 
 Component:
 {component_desc}
@@ -217,16 +235,20 @@ Consider:
 - Does the rule's requirement logically apply to this type of component?
 - Is the rule about something this component can actually satisfy or violate?
 - Would a human building plan reviewer check this component against this rule?
+- For site plans: REJECT building-specific rules (dwelling houses, building work, etc.)
 
 Examples of IRRELEVANT matches:
 - Checking a "window" against "open space network connectivity"
 - Checking a "living room" against "riparian wetland setbacks" (unless property is near water)
 - Checking a "door" against "temporary entertainment events"
+- Checking a "site plan setback" against "dwelling house provisions" (SITE PLAN SPECIFIC)
+- Checking a "site plan setback" against "building work requirements" (SITE PLAN SPECIFIC)
 
 Examples of RELEVANT matches:
 - Checking a "bedroom" against "minimum room area requirements"
 - Checking a "setback" against "boundary clearance requirements"
 - Checking an "egress door" against "minimum door width requirements"
+- Checking a "site plan setback" against "riparian setback requirements"
 
 Respond in JSON format:
 {{
@@ -791,6 +813,53 @@ def process_components(
     evaluations = []
     embed_cache = {}
 
+    # Check if enriched data is available
+    has_enrichment = "llm_enrichment" in components_data
+    enrichment = components_data.get("llm_enrichment", {})
+
+    if has_enrichment:
+        log(f"✨ Using LLM-enriched data for enhanced compliance checking")
+
+        # Use enriched categorization to prioritize checks
+        categorization = enrichment.get("categorization", {})
+        critical_components = categorization.get("critical_components", [])
+        if critical_components:
+            log(f"  Critical components identified: {len(critical_components)}")
+
+        # Check data quality
+        reconciliation = enrichment.get("reconciliation", {})
+        quality_score = reconciliation.get("quality_score", 1.0)
+        if quality_score < 0.7:
+            log(f"⚠️  Low data quality score: {quality_score:.2f} - results may need manual review")
+    else:
+        log(f"ℹ️  No enrichment data found - using standard processing")
+
+    # Detect plan type (site plan vs building plan)
+    plan_context = "unknown"
+    sheets = components_data.get("sheets", [])
+
+    # Use enriched sheet metadata if available
+    if has_enrichment:
+        sheet_metadata = enrichment.get("sheet_metadata", [])
+        if sheet_metadata and len(sheet_metadata) > 0:
+            first_sheet_meta = sheet_metadata[0].get("metadata", {})
+            drawing_type = first_sheet_meta.get("drawing_type", "")
+            if "site_plan" in drawing_type:
+                plan_context = "site_plan"
+                log(f"Detected SITE PLAN (from enrichment) - will filter out building-specific rules")
+            elif drawing_type in ["floor_plan", "elevation", "section"]:
+                plan_context = "building_plan"
+                log(f"Detected BUILDING PLAN (from enrichment): {drawing_type}")
+
+    # Fall back to heuristic detection if no enrichment
+    if plan_context == "unknown":
+        if sheets and sheets[0].get("lot_info"):
+            plan_context = "site_plan"
+            log(f"Detected SITE PLAN - will filter out building-specific rules")
+        elif sheets and (sheets[0].get("rooms") or sheets[0].get("building_envelope")):
+            plan_context = "building_plan"
+            log(f"Detected BUILDING PLAN")
+
     for sheet in components_data.get("sheets", []):
         sheet_num = sheet.get("sheet_number", 1)
 
@@ -823,7 +892,7 @@ def process_components(
 
                         # Check relevance with LLM
                         is_relevant, relevance_conf, reasoning = check_rule_relevance(
-                            "room", room, rule, openai_client
+                            "room", room, rule, openai_client, plan_context
                         )
 
                         if not is_relevant:
@@ -861,7 +930,7 @@ def process_components(
 
                         # Check relevance
                         is_relevant, relevance_conf, reasoning = check_rule_relevance(
-                            "geometric_setback", setback, rule, openai_client
+                            "geometric_setback", setback, rule, openai_client, plan_context
                         )
 
                         if not is_relevant:
@@ -896,7 +965,7 @@ def process_components(
 
                         # Check relevance
                         is_relevant, relevance_conf, reasoning = check_rule_relevance(
-                            "opening", opening, rule, openai_client
+                            "opening", opening, rule, openai_client, plan_context
                         )
 
                         if not is_relevant:
@@ -931,7 +1000,7 @@ def process_components(
 
                         # Check relevance
                         is_relevant, relevance_conf, reasoning = check_rule_relevance(
-                            "parking", parking, rule, openai_client
+                            "parking", parking, rule, openai_client, plan_context
                         )
 
                         if not is_relevant:
@@ -966,7 +1035,7 @@ def process_components(
                         rule = rules[candidate.rule_id]
 
                         is_relevant, relevance_conf, reasoning = check_rule_relevance(
-                            "lot_info", lot_info, rule, openai_client
+                            "lot_info", lot_info, rule, openai_client, plan_context
                         )
 
                         if not is_relevant:
@@ -1000,7 +1069,7 @@ def process_components(
                         rule = rules[candidate.rule_id]
 
                         is_relevant, relevance_conf, reasoning = check_rule_relevance(
-                            "water_feature", water_feature, rule, openai_client
+                            "water_feature", water_feature, rule, openai_client, plan_context
                         )
 
                         if not is_relevant:
