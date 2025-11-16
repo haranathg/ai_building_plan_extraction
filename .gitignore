@@ -21,3 +21,4 @@ venv/
 # Generated analysis outputs
 data/**/*.json
 reports/**/*.json
+node_modules/

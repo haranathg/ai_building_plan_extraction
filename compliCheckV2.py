@@ -15,6 +15,8 @@ Options:
     --enable-enrichment    Enable LLM enrichment layer (requires ANTHROPIC_API_KEY)
     --skip-enrichment      Skip enrichment and use standard processing
     --enrichment-ops       Specify enrichment operations: infer_metadata, categorize, label, reconcile, all
+    --use-bedrock-kb       Use AWS Bedrock Knowledge Base for compliance checking
+    --kb-id                Bedrock Knowledge Base ID (overrides BEDROCK_KB_ID env var)
     --output-dir           Directory for output files (default: reports/)
     --keep-intermediates   Keep intermediate JSON files for debugging
 
@@ -23,6 +25,7 @@ Features:
     - Quality score indicators in reports
     - Enhanced plan type detection
     - Critical component prioritization
+    - AWS Bedrock Knowledge Base integration for compliance
 """
 
 import os
@@ -90,6 +93,7 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 EXTRACT_SCRIPT = SCRIPT_DIR / "scripts" / "extract_compliance_components.py"
 ENRICHMENT_SCRIPT = SCRIPT_DIR / "scripts" / "llm_enrichment_layer.py"
 CHECK_SCRIPT = SCRIPT_DIR / "scripts" / "check_component_compliance.py"
+CHECK_SCRIPT_BEDROCK = SCRIPT_DIR / "scripts" / "check_component_compliance_bedrock.py"
 REPORT_SCRIPT = SCRIPT_DIR / "scripts" / "generate_enhanced_compliance_report.py"
 
 # Find Python executable
@@ -139,14 +143,27 @@ def step2_enrich_components(components_path: Path, output_path: Path, operations
         print_warning("Enrichment failed - continuing with unenriched data")
         return False, components_path
 
-def step3_check_compliance(components_path: Path, output_path: Path) -> bool:
+def step3_check_compliance(components_path: Path, output_path: Path, use_bedrock: bool = False, kb_id: str = None) -> bool:
     """Check compliance against rules database."""
     print_step(3, "Checking compliance against building codes")
-    cmd = [
-        PYTHON_CMD, str(CHECK_SCRIPT),
-        "--components", str(components_path),
-        "--output", str(output_path)
-    ]
+
+    if use_bedrock:
+        print(f"  {Color.OKCYAN}Using AWS Bedrock Knowledge Base{Color.ENDC}")
+        cmd = [
+            PYTHON_CMD, str(CHECK_SCRIPT_BEDROCK),
+            "--components", str(components_path),
+            "--output", str(output_path)
+        ]
+        if kb_id:
+            cmd.extend(["--kb-id", kb_id])
+    else:
+        print(f"  {Color.OKCYAN}Using Neo4j + Pinecone{Color.ENDC}")
+        cmd = [
+            PYTHON_CMD, str(CHECK_SCRIPT),
+            "--components", str(components_path),
+            "--output", str(output_path)
+        ]
+
     success, _ = run_command(cmd, "Compliance checking")
     if success:
         print_success(f"Compliance results saved: {output_path.name}")
@@ -172,11 +189,14 @@ def run_complicheck(
     enable_enrichment: bool = True,
     enrichment_ops: list = None,
     output_dir: Path = None,
-    keep_intermediates: bool = False
+    keep_intermediates: bool = False,
+    use_bedrock_kb: bool = False,
+    kb_id: str = None
 ) -> bool:
     """Run the complete CompliCheck v2.0 pipeline."""
 
-    print_header("CompliCheck v2.0 - Enhanced Compliance Checking")
+    mode = "Bedrock KB" if use_bedrock_kb else "Neo4j + Pinecone"
+    print_header(f"CompliCheck v2.0 - Enhanced Compliance Checking ({mode})")
 
     # Validate input
     if not pdf_path.exists():
@@ -223,7 +243,7 @@ def run_complicheck(
         print_step(2, "Enrichment disabled - using standard processing")
 
     # === STEP 3: Check Compliance ===
-    if not step3_check_compliance(working_components_file, compliance_file):
+    if not step3_check_compliance(working_components_file, compliance_file, use_bedrock_kb, kb_id):
         return False
 
     # === STEP 4: Generate Report ===
@@ -265,11 +285,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Standard run with enrichment
+  # Standard run with enrichment (Neo4j + Pinecone)
   python3 compliCheckV2.py data/plan.pdf
+
+  # Use AWS Bedrock Knowledge Base for compliance
+  python3 compliCheckV2.py data/plan.pdf --use-bedrock-kb
 
   # Skip enrichment for faster processing
   python3 compliCheckV2.py data/plan.pdf --skip-enrichment
+
+  # Use Bedrock KB with specific KB ID
+  python3 compliCheckV2.py data/plan.pdf --use-bedrock-kb --kb-id YOUR_KB_ID
 
   # Run only specific enrichment operations
   python3 compliCheckV2.py data/plan.pdf --enrichment-ops infer_metadata categorize
@@ -319,6 +345,19 @@ Examples:
         help="Keep intermediate JSON files for debugging"
     )
 
+    parser.add_argument(
+        "--use-bedrock-kb",
+        action="store_true",
+        help="Use AWS Bedrock Knowledge Base for compliance checking (instead of Neo4j + Pinecone)"
+    )
+
+    parser.add_argument(
+        "--kb-id",
+        type=str,
+        default=None,
+        help="AWS Bedrock Knowledge Base ID (overrides BEDROCK_KB_ID env var)"
+    )
+
     args = parser.parse_args()
 
     # Handle enrichment flags
@@ -330,7 +369,9 @@ Examples:
             enable_enrichment=enable_enrichment,
             enrichment_ops=args.enrichment_ops,
             output_dir=args.output_dir,
-            keep_intermediates=args.keep_intermediates
+            keep_intermediates=args.keep_intermediates,
+            use_bedrock_kb=args.use_bedrock_kb,
+            kb_id=args.kb_id
         )
 
         sys.exit(0 if success else 1)

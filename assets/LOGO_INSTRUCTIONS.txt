@@ -1,0 +1,26 @@
+COMPLICHECK LOGO SETUP
+======================
+
+To add your logo to the PDF reports:
+
+1. Save your logo image as: assets/complicheck_logo.png
+   
+2. Recommended specifications:
+   - Format: PNG with transparent background
+   - Size: 140 x 80 pixels (or similar aspect ratio)
+   - Color: Should work well on white background
+   
+3. The logo will appear:
+   - Bottom-right corner of every page
+   - Size: 0.7" wide × 0.4" tall
+   
+4. After adding the logo, just regenerate the report:
+   python3 scripts/generate_enhanced_compliance_report.py \
+     --components data/your_components.json \
+     --compliance data/your_compliance.json \
+     --output reports/your_report.pdf
+
+The user provided this logo URL:
+https://lh3.googleusercontent.com/a/ACg8ocIqWOs_YxWDHdGKPfPZsTrCaK0-xZ4LqXqz0Y1IpKvOMX5jRfk=s288-c-no
+
+You can download it manually and save as: assets/complicheck_logo.png

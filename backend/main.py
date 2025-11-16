@@ -48,6 +48,7 @@ class BasicInfoRequest(BaseModel):
     project_description: str
     address: str
     consent_type: str
+    use_bedrock_kb: Optional[bool] = False
 
 class PreCheckResponse(BaseModel):
     success: bool
@@ -111,7 +112,8 @@ async def run_complicheck(
     pdf_path: str,
     output_dir: str,
     precheck_id: str,
-    file_type: str
+    file_type: str,
+    use_bedrock_kb: bool = False
 ) -> dict:
     """Run CompliCheck pipeline asynchronously"""
     try:
@@ -123,6 +125,10 @@ async def run_complicheck(
             '--enable-enrichment',
             '--keep-intermediates'
         ]
+
+        # Add Bedrock KB flag if requested
+        if use_bedrock_kb:
+            cmd.append('--use-bedrock-kb')
 
         # Run subprocess
         process = await asyncio.create_subprocess_exec(
@@ -259,6 +265,7 @@ async def save_basic_info(precheck_id: str, request: BasicInfoRequest):
         'address': request.address,
         'consent_type': request.consent_type
     }
+    precheck['use_bedrock_kb'] = request.use_bedrock_kb
 
     return {"success": True, "message": "Basic info saved"}
 
@@ -350,11 +357,15 @@ async def process_precheck(precheck_id: str, background_tasks: BackgroundTasks):
             precheck['processing_step'] = 'Extracting components from site plan...'
             precheck['progress'] = 25
 
+            # Get Bedrock KB flag from precheck
+            use_bedrock_kb = precheck.get('use_bedrock_kb', False)
+
             site_plan_result = await run_complicheck(
                 files['site_plan'],
                 str(output_dir),
                 precheck_id,
-                'site_plan'
+                'site_plan',
+                use_bedrock_kb
             )
             results['site_plan'] = site_plan_result
 
@@ -370,7 +381,8 @@ async def process_precheck(precheck_id: str, background_tasks: BackgroundTasks):
                     files['building_plan'],
                     str(output_dir),
                     precheck_id,
-                    'building_plan'
+                    'building_plan',
+                    use_bedrock_kb
                 )
                 results['building_plan'] = building_plan_result
 
