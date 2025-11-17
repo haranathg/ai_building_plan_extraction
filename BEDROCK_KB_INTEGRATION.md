@@ -132,11 +132,7 @@ python3 compliCheckV2.py data/plan.pdf --enable-enrichment
 
 ### Web Frontend
 
-1. Navigate to the **BasicInfo** page
-2. Toggle **"Use AWS Bedrock Knowledge Base"** switch
-3. Continue with file upload and processing
-
-The choice is saved with your pre-check and used during compliance checking.
+The web frontend uses the compliance engine configured via the `USE_BEDROCK_KB` environment variable in your backend `.env` file. There is no UI toggle - the backend automatically uses whatever is configured in the environment.
 
 ## Standalone Script
 

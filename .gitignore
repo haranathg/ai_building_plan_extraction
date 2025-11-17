@@ -22,3 +22,4 @@ venv/
 data/**/*.json
 reports/**/*.json
 node_modules/
+bedrock-user_accessKeys.csv
