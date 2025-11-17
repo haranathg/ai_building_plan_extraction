@@ -1,0 +1,471 @@
+{
+  "pdf_name": "site_plan_10-North-Point_REV-A_Lot-2.pdf",
+  "summary": {
+    "total_sheets": 1,
+    "total_rooms": 2,
+    "total_setbacks": 0,
+    "total_geometric_setbacks": 4,
+    "total_openings": 0,
+    "total_parking": 0,
+    "total_stairs": 1,
+    "total_fire_safety": 1,
+    "total_accessibility": 0,
+    "total_height_levels": 3,
+    "room_types": [
+      "bedroom"
+    ]
+  },
+  "sheets": [
+    {
+      "sheet_number": 1,
+      "sheet_title": null,
+      "scale": "Scale: 1:500 @A3 Project: Layout",
+      "rooms": [
+        {
+          "name": "described",
+          "room_type": "bedroom",
+          "area": null,
+          "width": null,
+          "length": null,
+          "location": [
+            1045.38699065,
+            141.21537380000007
+          ],
+          "dimensions": [],
+          "boundary_polygon": null
+        },
+        {
+          "name": "MBRC",
+          "room_type": "bedroom",
+          "area": null,
+          "width": null,
+          "length": null,
+          "location": [
+            1062.1082667800001,
+            440.37537380000003
+          ],
+          "dimensions": [],
+          "boundary_polygon": null
+        }
+      ],
+      "setbacks": [],
+      "geometric_setbacks": [
+        {
+          "direction": "front",
+          "min_distance": 386.28,
+          "max_distance": 386.28,
+          "avg_distance": 386.28,
+          "num_measurement_points": 1
+        },
+        {
+          "direction": "rear",
+          "min_distance": 167.88,
+          "max_distance": 167.88,
+          "avg_distance": 167.88,
+          "num_measurement_points": 1
+        },
+        {
+          "direction": "left_side",
+          "min_distance": 941.76,
+          "max_distance": 941.76,
+          "avg_distance": 941.76,
+          "num_measurement_points": 1
+        },
+        {
+          "direction": "right_side",
+          "min_distance": 218.58000000000004,
+          "max_distance": 218.58000000000004,
+          "avg_distance": 218.58000000000004,
+          "num_measurement_points": 1
+        }
+      ],
+      "openings": [],
+      "parking": [],
+      "stairs": [
+        {
+          "circulation_type": "stair",
+          "width": null,
+          "rise": null,
+          "run": null,
+          "slope": null,
+          "num_treads": null,
+          "has_handrail": false,
+          "is_egress": false,
+          "location": [
+            1143.91318736,
+            199.4153738
+          ]
+        }
+      ],
+      "fire_safety": [
+        {
+          "feature_type": "extinguisher",
+          "location": [
+            1062.1107490699999,
+            162.99537380000004
+          ],
+          "coverage_area": null,
+          "rating": null
+        }
+      ],
+      "accessibility": [],
+      "height_levels": [
+        {
+          "level_name": "such",
+          "elevation": null,
+          "height_above_grade": null,
+          "location": [
+            1162.2169836799999,
+            199.4153738
+          ]
+        },
+        {
+          "level_name": "flood",
+          "elevation": null,
+          "height_above_grade": null,
+          "location": [
+            1036.51508552,
+            228.57537380000008
+          ]
+        },
+        {
+          "level_name": "Beach",
+          "elevation": null,
+          "height_above_grade": null,
+          "location": [
+            1149.60180788,
+            566.7051896
+          ]
+        }
+      ],
+      "building_envelope": null,
+      "dimensions_found": [],
+      "annotations": [
+        "NOTES:",
+        "notes",
+        "NOTE:"
+      ],
+      "lot_info": {
+        "lot_number": "2",
+        "lot_area": 1190.0,
+        "lot_area_unit": "m\u00b2",
+        "boundary_dimensions": [
+          {
+            "value": 139.0,
+            "original_text": "139",
+            "location": [
+              347.72098399999993,
+              291.6419600000001
+            ],
+            "unit": "m"
+          },
+          {
+            "value": 68.3,
+            "original_text": "68.3",
+            "location": [
+              472.68969956571016,
+              448.0838165486852
+            ],
+            "unit": "m"
+          },
+          {
+            "value": 56.9,
+            "original_text": "56.9",
+            "location": [
+              492.2170348531574,
+              523.46996357879
+            ],
+            "unit": "m"
+          },
+          {
+            "value": 137.0,
+            "original_text": "137",
+            "location": [
+              552.680984,
+              607.18196
+            ],
+            "unit": "m"
+          },
+          {
+            "value": 13.8,
+            "original_text": "13.8",
+            "location": [
+              677.2657045999999,
+              387.06093302
+            ],
+            "unit": "m"
+          },
+          {
+            "value": 10.0,
+            "original_text": "10",
+            "location": [
+              1002.04549856,
+              566.7051896
+            ],
+            "unit": "m"
+          }
+        ],
+        "street_frontage": null,
+        "boundary_polygon": null,
+        "location": [
+          496.10598361999996,
+          483.40950019999997
+        ]
+      },
+      "adjacent_properties": [
+        {
+          "identifier": "SP163064",
+          "direction": null,
+          "location": [
+            346.63716800000003,
+            306.457568
+          ]
+        },
+        {
+          "identifier": "SP163257",
+          "direction": null,
+          "location": [
+            551.5971679999999,
+            621.937568
+          ]
+        }
+      ],
+      "water_features": [
+        {
+          "feature_type": "creek",
+          "name": "Dux Creek",
+          "location": [
+            826.4811865099999,
+            557.4944198000001
+          ],
+          "boundary_relation": null
+        }
+      ],
+      "north_pointer": {
+        "found": true,
+        "location": [
+          1028.104973,
+          566.7051896
+        ],
+        "rotation": null,
+        "pointer_type": "text_indicator"
+      },
+      "title_block": null,
+      "legend": {
+        "found": true,
+        "location": [
+          994.2847293499999,
+          119.01089900000005
+        ],
+        "symbol_count": 179,
+        "symbols": [
+          "Local",
+          "authority",
+          "City",
+          "of",
+          "Moreton",
+          "Bay",
+          "NOTES:",
+          "(i)",
+          "This",
+          "plan",
+          "was",
+          "prepared",
+          "by",
+          "ARC",
+          "PLANNING",
+          "PTY",
+          "LYD",
+          "for",
+          "the",
+          "purpose"
+        ]
+      },
+      "schedules": [],
+      "structural_elements": [],
+      "mep_elements": [
+        {
+          "system_type": "hvac",
+          "element_type": "air_conditioner",
+          "identifier": "accept",
+          "location": [
+            1109.2494289399997,
+            155.6753738
+          ],
+          "specifications": null
+        },
+        {
+          "system_type": "hvac",
+          "element_type": "vent",
+          "identifier": "contravention",
+          "location": [
+            1142.2518811699997,
+            170.25537380000003
+          ],
+          "specifications": null
+        },
+        {
+          "system_type": "hvac",
+          "element_type": "air_conditioner",
+          "identifier": "accuracy",
+          "location": [
+            1088.6647403900001,
+            192.1553738
+          ],
+          "specifications": null
+        },
+        {
+          "system_type": "hvac",
+          "element_type": "air_conditioner",
+          "identifier": "placed",
+          "location": [
+            1122.92942894,
+            199.4153738
+          ],
+          "specifications": null
+        },
+        {
+          "system_type": "hvac",
+          "element_type": "air_conditioner",
+          "identifier": "contact@arcplanning.com.au",
+          "location": [
+            1085.9086695382493,
+            401.0178718659278
+          ],
+          "specifications": null
+        },
+        {
+          "system_type": "hvac",
+          "element_type": "air_conditioner",
+          "identifier": "Beach",
+          "location": [
+            1149.60180788,
+            566.7051896
+          ],
+          "specifications": null
+        }
+      ],
+      "drawing_notes": [
+        {
+          "note_type": "general",
+          "text": "NOTES:",
+          "location": [
+            994.2847293499999,
+            119.01089900000005
+          ],
+          "reference_number": null
+        },
+        {
+          "note_type": "general",
+          "text": "notes",
+          "location": [
+            1121.87316122,
+            243.0353738
+          ],
+          "reference_number": null
+        },
+        {
+          "note_type": "general",
+          "text": "NOTE:",
+          "location": [
+            291.48244928,
+            740.3451896
+          ],
+          "reference_number": null
+        }
+      ]
+    }
+  ],
+  "llm_enrichment": {
+    "sheet_metadata": [
+      {
+        "sheet_number": 1,
+        "metadata": {
+          "drawing_type": "site_plan",
+          "drawing_subtype": "layout",
+          "confidence": 0.85,
+          "primary_purpose": "To provide an overview of the site layout including room placements and MEP systems.",
+          "compliance_categories": [
+            "fire_safety"
+          ],
+          "review_priority": "medium",
+          "extraction_quality": "good"
+        }
+      }
+    ],
+    "categorization": {
+      "by_compliance_domain": {
+        "zoning": {
+          "components": [
+            "setbacks",
+            "parking"
+          ],
+          "count": 0
+        },
+        "building_code": {
+          "components": [
+            "rooms"
+          ],
+          "count": 2
+        },
+        "fire_safety": {
+          "components": [
+            "fire_safety"
+          ],
+          "count": 1
+        },
+        "accessibility": {
+          "components": [
+            "accessibility"
+          ],
+          "count": 0
+        },
+        "structural": {
+          "components": [],
+          "count": 0
+        }
+      },
+      "critical_components": [
+        "fire_safety"
+      ],
+      "missing_common_components": [
+        "lot_coverage",
+        "stairs",
+        "openings",
+        "accessibility"
+      ]
+    },
+    "room_labels": [
+      {
+        "components": [
+          {
+            "name": "described",
+            "room_type": "bedroom",
+            "readable_label": "Described Bedroom",
+            "compliance_context": "Ensures that the room meets safety and habitability standards.",
+            "review_notes": "Check for proper ventilation, egress windows, and compliance with local building codes."
+          },
+          {
+            "name": "MBRC",
+            "room_type": "bedroom",
+            "readable_label": "Master Bedroom with Closet",
+            "compliance_context": "Critical for ensuring adequate space and access to storage, which impacts livability.",
+            "review_notes": "Verify closet size and accessibility, ensure it meets minimum space requirements for a bedroom."
+          }
+        ]
+      }
+    ],
+    "reconciliation": {
+      "conflicts": [
+        {
+          "issue": "Total rooms reported (2) do not match the number of sheets with rooms (1).",
+          "severity": "high",
+          "resolution": "Verify the total number of rooms and ensure that all rooms are included in the sheets."
+        }
+      ],
+      "missing_data": [],
+      "quality_score": 0.7,
+      "confidence_level": "medium"
+    }
+  }
+}

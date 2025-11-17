@@ -15,10 +15,16 @@ Options:
     --enable-enrichment    Enable LLM enrichment layer (requires ANTHROPIC_API_KEY)
     --skip-enrichment      Skip enrichment and use standard processing
     --enrichment-ops       Specify enrichment operations: infer_metadata, categorize, label, reconcile, all
-    --use-bedrock-kb       Use AWS Bedrock Knowledge Base for compliance checking
+    --use-bedrock-kb       Use AWS Bedrock Knowledge Base for compliance checking (overrides USE_BEDROCK_KB env var)
     --kb-id                Bedrock Knowledge Base ID (overrides BEDROCK_KB_ID env var)
     --output-dir           Directory for output files (default: reports/)
     --keep-intermediates   Keep intermediate JSON files for debugging
+
+Environment Variables:
+    USE_BEDROCK_KB         Set to 1 to use Bedrock KB by default (0 for Neo4j + Pinecone)
+    BEDROCK_KB_ID          Default Knowledge Base ID
+    AWS_ACCESS_KEY_ID      AWS IAM Access Key
+    AWS_SECRET_ACCESS_KEY  AWS IAM Secret Key
 
 Features:
     - Automatic fallback if enrichment fails
@@ -363,6 +369,9 @@ Examples:
     # Handle enrichment flags
     enable_enrichment = args.enable_enrichment and not args.skip_enrichment
 
+    # Check for USE_BEDROCK_KB environment variable (can be overridden by --use-bedrock-kb flag)
+    use_bedrock_kb = args.use_bedrock_kb or os.getenv('USE_BEDROCK_KB', '').lower() in ('1', 'true', 'yes')
+
     try:
         success = run_complicheck(
             pdf_path=args.pdf_path,
@@ -370,7 +379,7 @@ Examples:
             enrichment_ops=args.enrichment_ops,
             output_dir=args.output_dir,
             keep_intermediates=args.keep_intermediates,
-            use_bedrock_kb=args.use_bedrock_kb,
+            use_bedrock_kb=use_bedrock_kb,
             kb_id=args.kb_id
         )
 

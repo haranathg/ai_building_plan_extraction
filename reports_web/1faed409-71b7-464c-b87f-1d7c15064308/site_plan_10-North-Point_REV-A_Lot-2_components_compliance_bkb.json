@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "timestamp": "2025-11-17T03:34:07.960837+00:00",
+    "kb_id": "OH8HTRTWTI",
+    "model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "total_components": 6,
+    "status_summary": {
+      "REVIEW": 6
+    }
+  },
+  "evaluations": [
+    {
+      "component_id": "room_0",
+      "component_type": "room",
+      "component_name": "described",
+      "requirement": "Habitable rooms must be located a sufficient distance from electricity substations",
+      "expected_value": "Habitable rooms should be located at a safe distance from substations to avoid potential adverse impacts from electromagnetic fields",
+      "actual_value": "No information provided about the room's proximity to substations",
+      "status": "REVIEW",
+      "confidence": 0.6,
+      "notes": [
+        "The provided component information does not specify if it is a habitable room or its location relative to substations.",
+        "The building code rules mention requirements for habitable rooms near substations, but without more details about the room type and location, compliance cannot be fully determined."
+      ],
+      "kb_sources": [
+        "s3://mb-stage-general-agent/POs/lightIndustryPrecinctPOs.docx",
+        "s3://mb-stage-general-agent/POs/mixedIndustryAndBusinessPrecinctPOs.docx"
+      ]
+    },
+    {
+      "component_id": "room_1",
+      "component_type": "room",
+      "component_name": "MBRC",
+      "requirement": "Evaluation failed",
+      "expected_value": "N/A",
+      "actual_value": "N/A",
+      "status": "REVIEW",
+      "confidence": 0.0,
+      "notes": [
+        "Error during evaluation: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again."
+      ],
+      "kb_sources": []
+    },
+    {
+      "component_id": "setback_2",
+      "component_type": "setback",
+      "component_name": "Setback",
+      "requirement": "Evaluation failed",
+      "expected_value": "N/A",
+      "actual_value": "N/A",
+      "status": "REVIEW",
+      "confidence": 0.0,
+      "notes": [
+        "Error during evaluation: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again."
+      ],
+      "kb_sources": []
+    },
+    {
+      "component_id": "setback_3",
+      "component_type": "setback",
+      "component_name": "Setback",
+      "requirement": "Evaluation failed",
+      "expected_value": "N/A",
+      "actual_value": "N/A",
+      "status": "REVIEW",
+      "confidence": 0.0,
+      "notes": [
+        "Error during evaluation: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again."
+      ],
+      "kb_sources": []
+    },
+    {
+      "component_id": "setback_4",
+      "component_type": "setback",
+      "component_name": "Setback",
+      "requirement": "Evaluation failed",
+      "expected_value": "N/A",
+      "actual_value": "N/A",
+      "status": "REVIEW",
+      "confidence": 0.0,
+      "notes": [
+        "Error during evaluation: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again."
+      ],
+      "kb_sources": []
+    },
+    {
+      "component_id": "setback_5",
+      "component_type": "setback",
+      "component_name": "Setback",
+      "requirement": "Building setback should be sufficient to minimize overlooking and maintain privacy of adjoining properties",
+      "expected_value": "Setback distance that ensures privacy and minimizes overlooking of adjacent properties",
+      "actual_value": "No specific setback distance provided",
+      "status": "REVIEW",
+      "confidence": 0.6,
+      "notes": [
+        "The provided component information does not include any specific setback distance or details.",
+        "Without knowing the actual setback distance, it is difficult to determine if it complies with the requirement for maintaining privacy and minimizing overlooking of adjacent properties.",
+        "Additional information about the proposed setback distance and the context of the surrounding properties would be needed to fully evaluate compliance."
+      ],
+      "kb_sources": [
+        "s3://mb-stage-general-agent/POs/lakesidePrecinctPOs.docx",
+        "s3://mb-stage-general-agent/POs/specialUsePOs.docx"
+      ]
+    }
+  ]
+}

@@ -15,23 +15,52 @@ CompliCheck v2.0 now supports AWS Bedrock Knowledge Base as an alternative to Ne
 
 ## Configuration
 
-### Environment Variables
+### AWS Credentials Setup
+
+**IMPORTANT**: This integration requires AWS IAM credentials, NOT Bedrock API Keys (ABSK).
+
+#### Option 1: AWS CLI Configuration (Recommended)
+
+1. **Create IAM Access Keys**:
+   - Go to AWS Console > IAM > Users > Your User
+   - Click "Security credentials" tab
+   - Click "Create access key"
+   - Choose "Command Line Interface (CLI)"
+   - Save the Access Key ID and Secret Access Key
+
+2. **Configure AWS CLI**:
+   ```bash
+   aws configure
+   ```
+   Enter when prompted:
+   - AWS Access Key ID: `<your-access-key-id>`
+   - AWS Secret Access Key: `<your-secret-access-key>`
+   - Default region name: `ap-southeast-2` (or your region)
+   - Default output format: `json`
+
+#### Option 2: Environment Variables
 
 Add the following to your `.env` file:
 
 ```bash
+# AWS IAM Credentials (NOT Bedrock API Keys!)
+AWS_ACCESS_KEY_ID=<your-access-key-id>
+AWS_SECRET_ACCESS_KEY=<your-secret-access-key>
+
 # AWS Bedrock Configuration
-BEDROCK_API_KEY=<your-base64-encoded-api-key>
-BEDROCK_REGION=us-east-1
+USE_BEDROCK_KB=1  # Set to 1 to use Bedrock KB by default, 0 for Neo4j + Pinecone
+BEDROCK_REGION=ap-southeast-2
 BEDROCK_KB_ID=<your-knowledge-base-id>
 BEDROCK_MODEL_ID=anthropic.claude-3-sonnet-20240229-v1:0
 ```
 
-**Note**: If you have AWS credentials configured (via `~/.aws/credentials` or IAM role), you can omit `BEDROCK_API_KEY`.
+**Note**:
+- Remove or comment out `BEDROCK_API_KEY` if you have it in your `.env` - it's not compatible with boto3.
+- The `--use-bedrock-kb` flag overrides the `USE_BEDROCK_KB` environment variable if both are set.
 
-### Required AWS Permissions
+### Required IAM Permissions
 
-Your AWS credentials need the following permissions:
+Your IAM user/role needs the following permissions:
 
 ```json
 {
@@ -49,12 +78,31 @@ Your AWS credentials need the following permissions:
 }
 ```
 
+### Why Not Bedrock API Keys (ABSK)?
+
+Bedrock API Keys (starting with "ABSK") are designed for direct REST API access and require AWS Signature V4 signing, which is complex to implement. The boto3 SDK (which this integration uses) requires IAM credentials instead.
+
+If you have a Bedrock API Key:
+1. Keep it for other use cases (e.g., direct REST API calls)
+2. Create IAM access keys for this integration (see instructions above)
+3. Both can coexist - use IAM credentials for boto3-based tools
+
 ## Usage
 
 ### Command Line
 
 #### Using Bedrock KB for Compliance
 
+**Option 1: Set in .env (recommended for persistent use)**
+```bash
+# In .env file
+USE_BEDROCK_KB=1
+
+# Then run normally
+python3 compliCheckV2.py data/plan.pdf
+```
+
+**Option 2: Use command-line flag**
 ```bash
 # Basic usage with Bedrock KB
 python3 compliCheckV2.py data/plan.pdf --use-bedrock-kb
@@ -72,7 +120,10 @@ python3 compliCheckV2.py data/plan.pdf --use-bedrock-kb --keep-intermediates
 #### Using Neo4j + Pinecone (Default)
 
 ```bash
-# Standard run - uses Neo4j + Pinecone
+# In .env file
+USE_BEDROCK_KB=0
+
+# Or just run normally (Neo4j + Pinecone is the default)
 python3 compliCheckV2.py data/plan.pdf
 
 # With enrichment
@@ -215,13 +266,46 @@ python3 compliCheckV2.py data/plan.pdf --use-bedrock-kb
 pip install boto3
 ```
 
+### "BEDROCK API KEY (ABSK) DETECTED"
+
+**Problem**: You have a Bedrock API Key in your `.env` file, but boto3 requires IAM credentials.
+
+**Solution**: Create and configure IAM access keys instead:
+
+1. Go to AWS Console > IAM > Users > Your User > Security Credentials
+2. Click "Create access key" > Choose "CLI"
+3. Run `aws configure` and enter the credentials
+4. Remove or comment out `BEDROCK_API_KEY` from `.env`
+
+### "The security token included in the request is invalid"
+
+**Problem**: AWS credentials are not configured or are invalid.
+
+**Solution**: Configure AWS credentials:
+
+```bash
+# Check if credentials are configured
+aws sts get-caller-identity
+
+# If not, configure them
+aws configure
+```
+
 ### "Bedrock KB query failed: AccessDeniedException"
 
-**Solution**: Check AWS credentials and permissions.
+**Problem**: Your IAM user/role lacks required Bedrock permissions.
+
+**Solution**: Add required permissions to your IAM user/role:
+
+1. Go to AWS Console > IAM > Users > Your User > Permissions
+2. Attach policy with `bedrock:InvokeModel` and `bedrock:Retrieve` permissions
+3. Or create a custom policy using the JSON from the Configuration section above
+
+You can test your permissions:
 
 ```bash
 aws sts get-caller-identity  # Verify credentials
-aws bedrock list-foundation-models  # Test Bedrock access
+aws bedrock list-foundation-models --region ap-southeast-2  # Test Bedrock access
 ```
 
 ### "No KB results found for component"
@@ -235,6 +319,16 @@ aws bedrock list-foundation-models  # Test Bedrock access
 - Enrich your KB with more building code documents
 - Use enrichment layer (`--enable-enrichment`) for better component descriptions
 - Adjust `--max-results` to retrieve more documents
+
+### "ThrottlingException: Too many requests"
+
+**Problem**: AWS Bedrock has rate limits on API calls. When processing many components, you may hit these limits.
+
+**Solution**: The script includes automatic retry logic and a 2-second delay between component evaluations. If you still encounter throttling:
+- Wait a few minutes before retrying
+- Process fewer components at a time
+- Check your AWS account's service quotas for Bedrock
+- Consider requesting a quota increase from AWS Support
 
 ## Best Practices
 

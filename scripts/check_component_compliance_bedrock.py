@@ -34,18 +34,22 @@ import json
 import os
 import sys
 import base64
+import hmac
+import hashlib
 from collections import defaultdict
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 try:
     import boto3
     from botocore.exceptions import ClientError
+    BOTO3_AVAILABLE = True
 except ImportError:
-    print("ERROR: boto3 not installed. Run: pip install boto3")
-    sys.exit(1)
+    BOTO3_AVAILABLE = False
+    print("[WARNING] boto3 not installed. Install with: pip install boto3")
 
 try:
     from dotenv import load_dotenv
@@ -61,7 +65,8 @@ except ImportError:
 DEFAULT_REGION = os.getenv('BEDROCK_REGION', 'us-east-1')
 DEFAULT_KB_ID = os.getenv('BEDROCK_KB_ID')
 DEFAULT_MODEL_ID = os.getenv('BEDROCK_MODEL_ID', 'anthropic.claude-3-sonnet-20240229-v1:0')
-BEDROCK_API_KEY = os.getenv('BEDROCK_API_KEY')
+# Try both environment variable names
+BEDROCK_API_KEY = os.getenv('AWS_BEARER_TOKEN_BEDROCK') or os.getenv('BEDROCK_API_KEY')
 
 
 # =============================================================================
@@ -105,40 +110,131 @@ class ComplianceEvaluation:
 
 
 # =============================================================================
-# AWS Bedrock Client Setup
+# AWS Bedrock HTTP Client (for ABSK API Keys)
 # =============================================================================
 
-def setup_bedrock_clients(region: str):
-    """Initialize Bedrock clients with API key or AWS credentials."""
+class BedrockHTTPClient:
+    """HTTP client for AWS Bedrock using ABSK API Keys."""
 
-    # If BEDROCK_API_KEY is provided, decode and use it
-    if BEDROCK_API_KEY:
+    def __init__(self, api_key: str, region: str):
+        # Decode base64 if needed
+        decoded_key = api_key
         try:
-            # Decode base64 API key if needed
-            decoded_key = base64.b64decode(BEDROCK_API_KEY).decode('utf-8')
-            # Extract access key and secret key from decoded string
-            # Format expected: "access_key:secret_key"
-            if ':' in decoded_key:
-                access_key, secret_key = decoded_key.split(':', 1)
-                session = boto3.Session(
-                    aws_access_key_id=access_key,
-                    aws_secret_access_key=secret_key,
-                    region_name=region
-                )
-            else:
-                # Use as-is if not in expected format
-                session = boto3.Session(region_name=region)
-        except Exception as e:
-            log(f"Warning: Could not decode BEDROCK_API_KEY, using default AWS credentials: {e}")
-            session = boto3.Session(region_name=region)
-    else:
-        # Use default AWS credentials (from ~/.aws/credentials or IAM role)
+            if not api_key.startswith('ABSK'):
+                decoded = base64.b64decode(api_key).decode('utf-8')
+                if decoded.startswith('ABSK'):
+                    decoded_key = decoded
+        except:
+            pass
+
+        self.api_key = decoded_key
+        self.region = region
+        self.kb_base_url = f"https://bedrock-agent-runtime.{region}.amazonaws.com"
+        self.runtime_base_url = f"https://bedrock-runtime.{region}.amazonaws.com"
+
+        log(f"Using Bedrock API Key authentication for region {region}")
+
+    def retrieve(self, knowledgeBaseId: str, retrievalQuery: Dict, retrievalConfiguration: Dict) -> Dict:
+        """Query Knowledge Base."""
+        import requests
+
+        url = f"{self.kb_base_url}/knowledgebases/{knowledgeBaseId}/retrieve"
+        headers = {
+            'Authorization': f'Bearer {self.api_key}',
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            'retrievalQuery': retrievalQuery,
+            'retrievalConfiguration': retrievalConfiguration
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            error(f"HTTP {e.response.status_code}: {e.response.text}")
+            raise
+
+    def invoke_model(self, modelId: str, contentType: str, accept: str, body: str) -> Dict:
+        """Invoke Bedrock model."""
+        import requests
+
+        url = f"{self.runtime_base_url}/model/{modelId}/invoke"
+        headers = {
+            'Authorization': f'Bearer {self.api_key}',
+            'Content-Type': contentType,
+            'Accept': accept
+        }
+
+        response = requests.post(url, headers=headers, data=body, timeout=60)
+        response.raise_for_status()
+
+        # Return response in boto3-compatible format
+        class ResponseWrapper:
+            def __init__(self, content):
+                self._content = content
+            def read(self):
+                return self._content
+
+        return {'body': ResponseWrapper(response.content)}
+
+
+def setup_bedrock_clients_boto3(region: str):
+    """Initialize Bedrock clients using boto3 with IAM credentials."""
+
+    if not BOTO3_AVAILABLE:
+        error("boto3 is required but not installed. Run: pip install boto3")
+        sys.exit(1)
+
+    try:
         session = boto3.Session(region_name=region)
 
-    bedrock_agent = session.client('bedrock-agent-runtime')
-    bedrock_runtime = session.client('bedrock-runtime')
+        # Test credentials
+        sts = session.client('sts')
+        identity = sts.get_caller_identity()
+        log(f"Using AWS IAM credentials for account: {identity['Account']}")
+        log(f"ARN: {identity['Arn']}")
 
-    return bedrock_agent, bedrock_runtime
+        bedrock_agent = session.client('bedrock-agent-runtime')
+        bedrock_runtime = session.client('bedrock-runtime')
+
+        return bedrock_agent, bedrock_runtime
+
+    except Exception as e:
+        error(f"Failed to initialize boto3 clients: {e}")
+        error("\nTo use this script, you need either:")
+        error("  1. BEDROCK_API_KEY (ABSK*) in .env, OR")
+        error("  2. AWS IAM credentials (AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY)")
+        error("\nFor IAM credentials:")
+        error("  - Run 'aws configure', OR")
+        error("  - Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables")
+        sys.exit(1)
+
+
+def setup_bedrock_client(region: str, api_key: str):
+    """Initialize Bedrock client - supports both ABSK keys and IAM credentials."""
+
+    # Try ABSK key first
+    if api_key:
+        # Decode to check if it's an ABSK key
+        decoded_key = api_key
+        try:
+            if not api_key.startswith('ABSK'):
+                decoded = base64.b64decode(api_key).decode('utf-8')
+                if decoded.startswith('ABSK'):
+                    decoded_key = decoded
+        except:
+            pass
+
+        if 'ABSK' in decoded_key or decoded_key.startswith('ABSK'):
+            log("Using Bedrock API Key (ABSK) authentication")
+            client = BedrockHTTPClient(api_key, region)
+            return client, client
+
+    # Fall back to IAM credentials via boto3
+    log("Using AWS IAM credentials (boto3)")
+    return setup_bedrock_clients_boto3(region)
 
 
 # =============================================================================
@@ -156,9 +252,7 @@ def query_knowledge_base(
     try:
         response = bedrock_agent.retrieve(
             knowledgeBaseId=kb_id,
-            retrievalQuery={
-                'text': query
-            },
+            retrievalQuery={'text': query},
             retrievalConfiguration={
                 'vectorSearchConfiguration': {
                     'numberOfResults': max_results
@@ -177,7 +271,7 @@ def query_knowledge_base(
 
         return results
 
-    except ClientError as e:
+    except Exception as e:
         error(f"Bedrock KB query failed: {e}")
         return []
 
@@ -350,6 +444,11 @@ def process_components(
         evaluations.append(evaluation)
         log(f"  Status: {evaluation.status} (Confidence: {evaluation.confidence:.2f})")
 
+        # Add delay to avoid AWS throttling (except for last component)
+        if i < len(components):
+            import time
+            time.sleep(2.0)  # 2 second delay between requests
+
     # Calculate summary statistics
     status_counts = defaultdict(int)
     for eval in evaluations:
@@ -422,7 +521,27 @@ def main():
     log(f"Loading components from {components_path}")
     with open(components_path) as f:
         data = json.load(f)
+
+        # Try different component structures
         components = data.get('components', [])
+
+        # If no top-level components array, flatten from sheets structure
+        if not components and 'sheets' in data:
+            components = []
+            for sheet in data['sheets']:
+                # Add rooms as components
+                for room in sheet.get('rooms', []):
+                    room['component_type'] = 'room'
+                    room['component_id'] = f"room_{len(components)}"
+                    room['component_name'] = room.get('name', 'Unnamed')
+                    components.append(room)
+
+                # Add setbacks as components
+                for setback in sheet.get('geometric_setbacks', []):
+                    setback['component_type'] = 'setback'
+                    setback['component_id'] = f"setback_{len(components)}"
+                    setback['component_name'] = setback.get('name', 'Setback')
+                    components.append(setback)
 
     if not components:
         error("No components found in input file")
@@ -430,7 +549,7 @@ def main():
 
     # Setup Bedrock clients
     log(f"Connecting to AWS Bedrock in {args.region}")
-    bedrock_agent, bedrock_runtime = setup_bedrock_clients(args.region)
+    bedrock_agent, bedrock_runtime = setup_bedrock_client(args.region, BEDROCK_API_KEY)
 
     # Process components
     results = process_components(

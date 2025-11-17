@@ -1,0 +1,112 @@
+{
+  "metadata": {
+    "timestamp": "2025-11-17T04:50:02.542445+00:00",
+    "kb_id": "OH8HTRTWTI",
+    "model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "total_components": 6,
+    "status_summary": {
+      "REVIEW": 6
+    }
+  },
+  "evaluations": [
+    {
+      "component_id": "room_0",
+      "component_type": "room",
+      "component_name": "described",
+      "requirement": "Habitable rooms must be located a sufficient distance from electricity substations to avoid potential adverse impacts from electromagnetic fields.",
+      "expected_value": "Habitable rooms should be located at a safe distance from electricity substations as defined in the Building Code of Australia.",
+      "actual_value": "The provided information does not specify the location of the room in relation to any electricity substations.",
+      "status": "REVIEW",
+      "confidence": 0.6,
+      "notes": [
+        "The provided information is insufficient to determine compliance with the requirement regarding the distance from electricity substations.",
+        "Additional details about the room's location and proximity to any substations would be needed to fully assess compliance."
+      ],
+      "kb_sources": [
+        "s3://mb-stage-general-agent/POs/lightIndustryPrecinctPOs.docx",
+        "s3://mb-stage-general-agent/POs/mixedIndustryAndBusinessPrecinctPOs.docx",
+        "s3://mb-stage-general-agent/POs/nextGenerationNeighbourhoodPOs.docx",
+        "s3://mb-stage-general-agent/POs/ruralResidentialPrecinctPOs.docx",
+        "s3://mb-stage-general-agent/POs/generalIndustryPrecinctPOs.docx"
+      ]
+    },
+    {
+      "component_id": "room_1",
+      "component_type": "room",
+      "component_name": "MBRC",
+      "requirement": "Evaluation failed",
+      "expected_value": "N/A",
+      "actual_value": "N/A",
+      "status": "REVIEW",
+      "confidence": 0.0,
+      "notes": [
+        "Error during evaluation: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again."
+      ],
+      "kb_sources": []
+    },
+    {
+      "component_id": "setback_2",
+      "component_type": "setback",
+      "component_name": "Setback",
+      "requirement": "Evaluation failed",
+      "expected_value": "N/A",
+      "actual_value": "N/A",
+      "status": "REVIEW",
+      "confidence": 0.0,
+      "notes": [
+        "Error during evaluation: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again."
+      ],
+      "kb_sources": []
+    },
+    {
+      "component_id": "setback_3",
+      "component_type": "setback",
+      "component_name": "Setback",
+      "requirement": "Evaluation failed",
+      "expected_value": "N/A",
+      "actual_value": "N/A",
+      "status": "REVIEW",
+      "confidence": 0.0,
+      "notes": [
+        "Error during evaluation: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again."
+      ],
+      "kb_sources": []
+    },
+    {
+      "component_id": "setback_4",
+      "component_type": "setback",
+      "component_name": "Setback",
+      "requirement": "Evaluation failed",
+      "expected_value": "N/A",
+      "actual_value": "N/A",
+      "status": "REVIEW",
+      "confidence": 0.0,
+      "notes": [
+        "Error during evaluation: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again."
+      ],
+      "kb_sources": []
+    },
+    {
+      "component_id": "setback_5",
+      "component_type": "setback",
+      "component_name": "Setback",
+      "requirement": "Setbacks should be sufficient to minimize overlooking and maintain privacy of adjoining properties",
+      "expected_value": "Setbacks that ensure privacy and minimize overlooking of neighboring properties",
+      "actual_value": "No specific setback values provided",
+      "status": "REVIEW",
+      "confidence": 0.6,
+      "notes": [
+        "The component 'Setback' does not provide any specific values or attributes related to setback distances.",
+        "Without knowing the actual setback distances, it is difficult to determine if the setbacks are sufficient to maintain privacy and minimize overlooking of neighboring properties.",
+        "Additional information about the proposed setback distances and the context of the surrounding properties would be needed to fully evaluate compliance with this requirement."
+      ],
+      "kb_sources": [
+        "s3://mb-stage-general-agent/POs/lakesidePrecinctPOs.docx",
+        "s3://mb-stage-general-agent/POs/specialUsePOs.docx",
+        "s3://mb-stage-general-agent/POs/ruralResidentialPrecinctPOs.docx",
+        "s3://mb-stage-general-agent/POs/localServicesPrecinctPOs.docx",
+        "s3://mb-stage-general-agent/POs/coastalCommunitiesPrecinctPOs.docx"
+      ]
+    }
+  ]
+}
