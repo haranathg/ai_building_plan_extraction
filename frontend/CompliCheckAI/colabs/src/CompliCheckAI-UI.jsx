@@ -192,18 +192,137 @@ const ProgressStepper = ({ currentStep, steps }) => (
   </div>
 );
 
-// ===== STEP 1: PROJECT DETAILS =====
-const Step1ProjectDetails = ({ data, setData, onNext }) => {
-  const [formData, setFormData] = useState(data.projectDetails || {
+// ===== STEP 1: PROJECT OVERVIEW (NEW) =====
+const Step1ProjectOverview = ({ data, setData, onNext }) => {
+  const [formData, setFormData] = useState(data.projectOverview || {
     projectName: '',
+    description: ''
+  });
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = () => {
+    setData(prev => ({ ...prev, projectOverview: formData }));
+    onNext();
+  };
+
+  const isValid = formData.projectName && formData.projectName.trim().length > 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-slate-50 to-white px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-emerald-600" />
+            New Project
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">Let's start with the basics about your project</p>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          {/* Welcome message */}
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-100">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-emerald-800">Welcome to CompliCheckAI</h3>
+                <p className="text-sm text-emerald-700 mt-1">
+                  We'll guide you through the pre-submission validation process for your building consent application. 
+                  Start by telling us about your project.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Project Name */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Project Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.projectName}
+              onChange={(e) => handleChange('projectName', e.target.value)}
+              placeholder="e.g., Smith Family Residence, 42 Greenview Lane Development"
+              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-lg"
+            />
+            <p className="text-xs text-slate-400 mt-2">Choose a memorable name to identify this project</p>
+          </div>
+
+          {/* Project Description */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Project Description <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              rows={6}
+              placeholder="Describe your proposed building work in detail. Include information about:
+• Type of construction (new build, renovation, addition)
+• Key features and specifications
+• Any special requirements or considerations
+• Purpose of the building"
+              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none"
+            />
+            <p className="text-xs text-slate-400 mt-2">
+              A detailed description helps our AI provide accurate document requirements
+            </p>
+          </div>
+
+          {/* Tips */}
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+            <h4 className="font-medium text-blue-800 flex items-center gap-2 mb-2">
+              <Info className="w-4 h-4" />
+              Tips for a good description
+            </h4>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• Mention the number of bedrooms, bathrooms, and stories</li>
+              <li>• Include approximate building area if known</li>
+              <li>• Note any special features (basement, garage, deck, pool)</li>
+              <li>• Describe the construction type (timber frame, concrete, steel)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-between items-center">
+        <button className="flex items-center gap-2 px-5 py-2.5 text-slate-600 hover:text-slate-800 transition-colors">
+          <Save className="w-4 h-4" />
+          Save Draft
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!isValid}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all shadow-lg ${
+            isValid
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/20'
+              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+          }`}
+        >
+          Continue
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ===== STEP 2: PROJECT DETAILS =====
+const Step2ProjectDetails = ({ data, setData, onNext, onBack }) => {
+  const [formData, setFormData] = useState(data.projectDetails || {
     address: '',
     consentType: 'new-dwelling',
     bedrooms: '3',
     stories: '2',
     buildingArea: '',
     landArea: '',
-    zoningDistrict: '',
-    description: ''
+    zoningDistrict: ''
   });
 
   const handleChange = (field, value) => {
@@ -223,24 +342,21 @@ const Step1ProjectDetails = ({ data, setData, onNext }) => {
             <Building2 className="w-5 h-5 text-emerald-600" />
             Project Details
           </h2>
-          <p className="text-sm text-slate-500 mt-1">Enter the details of your building consent application</p>
+          <p className="text-sm text-slate-500 mt-1">Enter the specifications for your building consent application</p>
         </div>
+
+        {/* Project context banner */}
+        {data.projectOverview?.projectName && (
+          <div className="px-6 py-3 bg-slate-50 border-b border-slate-200">
+            <p className="text-sm text-slate-600">
+              <span className="font-medium">Project:</span> {data.projectOverview.projectName}
+            </p>
+          </div>
+        )}
         
         <div className="p-6 space-y-6">
-          {/* Project Info */}
+          {/* Consent Type */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Project Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.projectName}
-                onChange={(e) => handleChange('projectName', e.target.value)}
-                placeholder="e.g., Smith Family Residence"
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Consent Type <span className="text-rose-500">*</span>
@@ -254,6 +370,24 @@ const Step1ProjectDetails = ({ data, setData, onNext }) => {
                 <option value="alteration">Alteration to Existing</option>
                 <option value="addition">Addition</option>
                 <option value="commercial">Commercial Building</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Zoning District
+              </label>
+              <select
+                value={formData.zoningDistrict}
+                onChange={(e) => handleChange('zoningDistrict', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white"
+              >
+                <option value="">Select zoning district...</option>
+                <option value="residential-single">Residential - Single House</option>
+                <option value="residential-mixed">Residential - Mixed Housing Suburban</option>
+                <option value="residential-urban">Residential - Mixed Housing Urban</option>
+                <option value="residential-terraced">Residential - Terrace Housing</option>
+                <option value="business-local">Business - Local Centre</option>
+                <option value="business-mixed">Business - Mixed Use</option>
               </select>
             </div>
           </div>
@@ -319,49 +453,21 @@ const Step1ProjectDetails = ({ data, setData, onNext }) => {
               </div>
             </div>
           </div>
-
-          {/* Zoning */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Zoning District
-            </label>
-            <select
-              value={formData.zoningDistrict}
-              onChange={(e) => handleChange('zoningDistrict', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white"
-            >
-              <option value="">Select zoning district...</option>
-              <option value="residential-single">Residential - Single House</option>
-              <option value="residential-mixed">Residential - Mixed Housing Suburban</option>
-              <option value="residential-urban">Residential - Mixed Housing Urban</option>
-              <option value="residential-terraced">Residential - Terrace Housing</option>
-              <option value="business-local">Business - Local Centre</option>
-              <option value="business-mixed">Business - Mixed Use</option>
-            </select>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Project Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              rows={4}
-              placeholder="Briefly describe the proposed building work..."
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none"
-            />
-          </div>
         </div>
       </div>
 
       {/* Actions */}
       <div className="flex justify-between items-center">
-        <button className="flex items-center gap-2 px-5 py-2.5 text-slate-600 hover:text-slate-800 transition-colors">
-          <Save className="w-4 h-4" />
-          Save Draft
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="flex items-center gap-2 px-5 py-2.5 text-slate-600 hover:text-slate-800 transition-colors">
+            <ChevronLeft className="w-5 h-5" />
+            Back
+          </button>
+          <button className="flex items-center gap-2 px-5 py-2.5 text-slate-600 hover:text-slate-800 transition-colors">
+            <Save className="w-4 h-4" />
+            Save Draft
+          </button>
+        </div>
         <button
           onClick={handleSubmit}
           className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg shadow-emerald-500/20"
@@ -374,8 +480,8 @@ const Step1ProjectDetails = ({ data, setData, onNext }) => {
   );
 };
 
-// ===== STEP 2: SYSTEM ANALYSIS =====
-const Step2SystemAnalysis = ({ data, onNext, onBack }) => {
+// ===== STEP 3: SYSTEM ANALYSIS =====
+const Step3SystemAnalysis = ({ data, onNext, onBack }) => {
   const [analyzing, setAnalyzing] = useState(true);
   const [progress, setProgress] = useState(0);
   const [analysisComplete, setAnalysisComplete] = useState(false);
@@ -517,8 +623,8 @@ const Step2SystemAnalysis = ({ data, onNext, onBack }) => {
   );
 };
 
-// ===== STEP 3: REQUIRED DOCUMENTS LIST =====
-const Step3RequiredDocuments = ({ data, setData, onNext, onBack }) => {
+// ===== STEP 4: REQUIRED DOCUMENTS LIST =====
+const Step4RequiredDocuments = ({ data, setData, onNext, onBack }) => {
   const requiredDocs = [
     { id: 'ba2', name: 'Building Consent Application Form (BA2)', category: 'Forms', required: true },
     { id: 'ownership', name: 'Certificate of Title / Ownership Evidence', category: 'Legal', required: true },
@@ -609,8 +715,8 @@ const Step3RequiredDocuments = ({ data, setData, onNext, onBack }) => {
   );
 };
 
-// ===== STEP 4: UPLOAD DOCUMENTS =====
-const Step4UploadDocuments = ({ data, setData, onNext, onBack }) => {
+// ===== STEP 5: UPLOAD DOCUMENTS =====
+const Step5UploadDocuments = ({ data, setData, onNext, onBack }) => {
   const [uploads, setUploads] = useState({
     'ba2': { file: null, status: 'pending' },
     'ownership': { file: null, status: 'pending' },
@@ -781,8 +887,8 @@ const Step4UploadDocuments = ({ data, setData, onNext, onBack }) => {
   );
 };
 
-// ===== STEP 5: VERIFICATION =====
-const Step5Verification = ({ data, onNext, onBack }) => {
+// ===== STEP 6: VERIFICATION =====
+const Step6Verification = ({ data, onNext, onBack }) => {
   const [verifying, setVerifying] = useState(true);
   const [results, setResults] = useState(null);
 
@@ -924,8 +1030,8 @@ const Step5Verification = ({ data, onNext, onBack }) => {
   );
 };
 
-// ===== STEP 6: RESOLVE ISSUES =====
-const Step6ResolveIssues = ({ data, onNext, onBack }) => {
+// ===== STEP 7: RESOLVE ISSUES =====
+const Step7ResolveIssues = ({ data, onNext, onBack }) => {
   const [justifications, setJustifications] = useState({});
 
   const issues = [
@@ -1044,8 +1150,8 @@ const Step6ResolveIssues = ({ data, onNext, onBack }) => {
   );
 };
 
-// ===== STEP 7: VALIDATION SUMMARY =====
-const Step7ValidationSummary = ({ data, onNext, onBack }) => {
+// ===== STEP 8: VALIDATION SUMMARY =====
+const Step8ValidationSummary = ({ data, onNext, onBack }) => {
   const hasWarnings = true; // Demo state
 
   return (
@@ -1089,7 +1195,7 @@ const Step7ValidationSummary = ({ data, onNext, onBack }) => {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-slate-500">Project:</span>
-                <p className="font-medium text-slate-800">{data.projectDetails?.projectName || 'Smith Family Residence'}</p>
+                <p className="font-medium text-slate-800">{data.projectOverview?.projectName || 'Smith Family Residence'}</p>
               </div>
               <div>
                 <span className="text-slate-500">Type:</span>
@@ -1130,6 +1236,17 @@ const Step7ValidationSummary = ({ data, onNext, onBack }) => {
           <div>
             <h3 className="font-semibold text-slate-800 mb-3">Included Documents</h3>
             <div className="grid grid-cols-2 gap-2">
+              {/* Form 2 - Auto-populated by AI */}
+              <div className="flex items-center gap-2 text-sm bg-gradient-to-r from-violet-50 to-purple-50 rounded-lg p-2 border border-violet-200">
+                <div className="flex items-center gap-2 flex-1">
+                  <CheckCircle2 className="w-4 h-4 text-violet-500" />
+                  <span className="text-slate-700">Form 2</span>
+                </div>
+                <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Zap className="w-3 h-3" />
+                  CompliCheckAI filled
+                </span>
+              </div>
               {['Site Plan', 'Floor Plans', 'Elevations', 'Structural Plans', 'Geotech Report', 'H1 Compliance', 'Specifications', 'Drainage Plans'].map((doc, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg p-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -1171,8 +1288,8 @@ const Step7ValidationSummary = ({ data, onNext, onBack }) => {
   );
 };
 
-// ===== STEP 8: SUBMIT TO COUNCIL =====
-const Step8SubmitToCouncil = ({ data, onBack }) => {
+// ===== STEP 9: SUBMIT TO COUNCIL =====
+const Step9SubmitToCouncil = ({ data, onBack }) => {
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -1349,34 +1466,37 @@ export default function CompliCheckAI() {
   const [data, setData] = useState({});
 
   const steps = [
-    { id: 1, label: 'Project Details' },
-    { id: 2, label: 'Analysis' },
-    { id: 3, label: 'Requirements' },
-    { id: 4, label: 'Upload' },
-    { id: 5, label: 'Verification' },
-    { id: 6, label: 'Resolve' },
-    { id: 7, label: 'Summary' },
-    { id: 8, label: 'Submit' },
+    { id: 1, label: 'Overview' },
+    { id: 2, label: 'Details' },
+    { id: 3, label: 'Analysis' },
+    { id: 4, label: 'Requirements' },
+    { id: 5, label: 'Upload' },
+    { id: 6, label: 'Verification' },
+    { id: 7, label: 'Resolve' },
+    { id: 8, label: 'Summary' },
+    { id: 9, label: 'Submit' },
   ];
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1ProjectDetails data={data} setData={setData} onNext={() => setCurrentStep(2)} />;
+        return <Step1ProjectOverview data={data} setData={setData} onNext={() => setCurrentStep(2)} />;
       case 2:
-        return <Step2SystemAnalysis data={data} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
+        return <Step2ProjectDetails data={data} setData={setData} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
       case 3:
-        return <Step3RequiredDocuments data={data} setData={setData} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} />;
+        return <Step3SystemAnalysis data={data} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} />;
       case 4:
-        return <Step4UploadDocuments data={data} setData={setData} onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} />;
+        return <Step4RequiredDocuments data={data} setData={setData} onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} />;
       case 5:
-        return <Step5Verification data={data} onNext={() => setCurrentStep(6)} onBack={() => setCurrentStep(4)} />;
+        return <Step5UploadDocuments data={data} setData={setData} onNext={() => setCurrentStep(6)} onBack={() => setCurrentStep(4)} />;
       case 6:
-        return <Step6ResolveIssues data={data} onNext={() => setCurrentStep(7)} onBack={() => setCurrentStep(5)} />;
+        return <Step6Verification data={data} onNext={() => setCurrentStep(7)} onBack={() => setCurrentStep(5)} />;
       case 7:
-        return <Step7ValidationSummary data={data} onNext={() => setCurrentStep(8)} onBack={() => setCurrentStep(6)} />;
+        return <Step7ResolveIssues data={data} onNext={() => setCurrentStep(8)} onBack={() => setCurrentStep(6)} />;
       case 8:
-        return <Step8SubmitToCouncil data={data} onBack={() => setCurrentStep(7)} />;
+        return <Step8ValidationSummary data={data} onNext={() => setCurrentStep(9)} onBack={() => setCurrentStep(7)} />;
+      case 9:
+        return <Step9SubmitToCouncil data={data} onBack={() => setCurrentStep(8)} />;
       default:
         return null;
     }

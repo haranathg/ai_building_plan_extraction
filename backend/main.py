@@ -429,21 +429,40 @@ async def get_precheck_data(precheck_id: str):
 @app.get("/api/precheck/{precheck_id}/report/{file_type}")
 async def get_report_json(precheck_id: str, file_type: str):
     """Get JSON report data for display"""
-    precheck = get_precheck(precheck_id)
-    if not precheck:
-        raise HTTPException(status_code=404, detail="Pre-check not found")
-
-    results = precheck.get('results', {})
-
     if file_type not in ['site_plan', 'building_plan']:
         raise HTTPException(status_code=400, detail="Invalid file type")
 
-    result = results.get(file_type, {})
+    precheck = get_precheck(precheck_id)
 
-    # Get JSON file paths
-    compliance_json_path = result.get('compliance_json')
-    enriched_json_path = result.get('enriched_json')
-    components_json_path = result.get('components_json')
+    # If precheck exists in memory, use its registered file paths
+    if precheck:
+        results = precheck.get('results', {})
+        result = results.get(file_type, {})
+
+        # Get JSON file paths from precheck results
+        compliance_json_path = result.get('compliance_json')
+        enriched_json_path = result.get('enriched_json')
+        components_json_path = result.get('components_json')
+        pdf_report_path = result.get('pdf_report')
+        report_status = result.get('status', 'unknown')
+    else:
+        # Fallback to file-based detection for older reports
+        report_dir = REPORTS_FOLDER / precheck_id
+        if not report_dir.exists():
+            raise HTTPException(status_code=404, detail="Pre-check not found")
+
+        # Find files by pattern
+        file_prefix = f"{file_type}_*"
+        compliance_files = list(report_dir.glob(f"{file_prefix}_compliance.json"))
+        enriched_files = list(report_dir.glob(f"{file_prefix}enriched.json"))
+        components_files = list(report_dir.glob(f"{file_prefix}_components.json"))
+        pdf_files = list(report_dir.glob(f"{file_prefix}*.pdf"))
+
+        compliance_json_path = str(compliance_files[0]) if compliance_files else None
+        enriched_json_path = str(enriched_files[0]) if enriched_files else None
+        components_json_path = str(components_files[0]) if components_files else None
+        pdf_report_path = str(pdf_files[0]) if pdf_files else None
+        report_status = 'completed' if compliance_json_path else 'review'
 
     report_data = {}
 
@@ -478,8 +497,8 @@ async def get_report_json(precheck_id: str, file_type: str):
         "success": True,
         "file_type": file_type,
         "report": report_data,
-        "has_pdf": result.get('pdf_report') is not None and Path(result.get('pdf_report', '')).exists(),
-        "status": result.get('status', 'unknown')
+        "has_pdf": pdf_report_path is not None and Path(pdf_report_path).exists(),
+        "status": report_status
     }
 
 @app.get("/api/precheck/{precheck_id}/download/{file_type}")
