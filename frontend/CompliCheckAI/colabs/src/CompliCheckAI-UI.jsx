@@ -1142,7 +1142,7 @@ const Step7ResolveIssues = ({ data, onNext, onBack }) => {
           onClick={onNext}
           className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg shadow-emerald-500/20"
         >
-          Generate Summary
+          Prep Form 2
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
@@ -1150,8 +1150,269 @@ const Step7ResolveIssues = ({ data, onNext, onBack }) => {
   );
 };
 
-// ===== STEP 8: VALIDATION SUMMARY =====
-const Step8ValidationSummary = ({ data, onNext, onBack }) => {
+// ===== STEP 8: FORM 2 PREVIEW =====
+const Step8Form2Preview = ({ data, onNext, onBack }) => {
+  const [generating, setGenerating] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setGenerating(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const formFields = {
+    section1: {
+      title: 'Section 1: The Building',
+      fields: [
+        { label: 'Street address of building', value: data.projectDetails?.address || '42 Greenview Lane, Remuera, Auckland 1050', locked: false },
+        { label: 'Legal description of land', value: 'Lot 15 DP 123456', locked: false },
+        { label: 'Building name', value: data.projectOverview?.projectName || 'Smith Family Residence', locked: false },
+        { label: 'Location of building within site', value: 'Front of site, 6m setback from street boundary', locked: false },
+        { label: 'Number of levels (above & below ground)', value: `${data.projectDetails?.stories || '2'} above ground, 0 below`, locked: false },
+        { label: 'Floor area (sq m)', value: data.projectDetails?.buildingArea || '185', locked: false },
+        { label: 'Current lawfully established use', value: 'Vacant land - new construction', locked: false },
+        { label: 'Year first constructed', value: 'N/A - New Build', locked: true },
+      ]
+    },
+    section2: {
+      title: 'Section 2: The Owner',
+      fields: [
+        { label: 'Name of Owner / Company', value: 'John & Mary Smith', locked: false },
+        { label: 'Contact person', value: 'John Smith', locked: false },
+        { label: 'Mailing address', value: '15 Current Street, Parnell, Auckland 1052', locked: false },
+        { label: 'Street address / registered office', value: '15 Current Street, Parnell, Auckland 1052', locked: false },
+        { label: 'Phone (Mobile)', value: '+64 21 555 0199', locked: false },
+        { label: 'Phone (Daytime)', value: '+64 9 555 0100', locked: false },
+        { label: 'Email address', value: 'john.smith@email.co.nz', locked: false },
+        { label: 'Evidence of ownership attached', value: 'Record of Title', locked: true },
+      ]
+    },
+    section3: {
+      title: 'Section 3: Agent (Acting on behalf of owner)',
+      fields: [
+        { label: 'Name of Agent / Company', value: 'Mitchell Architecture Ltd', locked: false },
+        { label: 'Contact person', value: 'Sarah Mitchell', locked: false },
+        { label: 'Mailing address', value: '15 Queen Street, Auckland CBD, Auckland 1010', locked: false },
+        { label: 'Phone (Mobile)', value: '+64 21 555 0123', locked: false },
+        { label: 'Phone (Daytime)', value: '+64 9 555 0150', locked: false },
+        { label: 'Email address', value: 'sarah@mitchellarch.co.nz', locked: false },
+        { label: 'Relationship to owner', value: 'Architect - Authorised agent for BC application', locked: false },
+        { label: 'First point of contact', value: 'Agent', locked: true },
+        { label: 'Invoice to', value: 'Owner', locked: true },
+      ]
+    },
+    section5: {
+      title: 'Section 5: The Project',
+      fields: [
+        { label: 'Description of the building work', value: data.projectOverview?.description || 'Construction of new 3-bedroom, 2-story residential dwelling with attached double garage. Timber frame construction on concrete slab foundation. Includes ensuite to master bedroom, open plan living/dining/kitchen, separate laundry, and covered outdoor deck area.', locked: false, multiline: true },
+        { label: 'Change of use?', value: 'No', locked: true },
+        { label: 'Intended life of building', value: '50+ years (standard)', locked: true },
+        { label: 'Previous Building Consents for this project', value: 'N/A - New application', locked: true },
+        { label: 'Estimated value of building work (incl. GST)', value: '$850,000', locked: false },
+      ]
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-violet-50 to-purple-50 px-6 py-4 border-b border-violet-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-violet-600" />
+                Form 2: Application for Building Consent
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">Section 45, Building Act 2004 - Auto-populated by CompliCheckAI</p>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-100 rounded-full">
+              <Zap className="w-4 h-4 text-violet-600" />
+              <span className="text-sm font-medium text-violet-700">AI Generated</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {generating ? (
+            <div className="py-16 text-center">
+              <div className="w-20 h-20 mx-auto mb-6 relative">
+                <div className="absolute inset-0 border-4 border-violet-100 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-violet-500 rounded-full animate-spin border-t-transparent"></div>
+                <Zap className="w-8 h-8 text-violet-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              </div>
+              <p className="text-lg font-medium text-slate-700">Generating Form 2...</p>
+              <p className="text-sm text-slate-400 mt-2">CompliCheckAI is populating the form based on your project details</p>
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Success message */}
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-emerald-800">Form 2 Successfully Generated</h3>
+                  <p className="text-sm text-emerald-700 mt-1">
+                    CompliCheckAI has auto-filled Sections 1-3 and 5 using your project information. Review the details below and make any corrections if needed.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setEditMode(!editMode)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    editMode 
+                      ? 'bg-violet-600 text-white' 
+                      : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {editMode ? 'Done Editing' : 'Edit Fields'}
+                </button>
+              </div>
+
+              {/* Form Preview */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                {/* Form Header */}
+                <div className="bg-slate-800 text-white px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg">FORM 2</h3>
+                      <p className="text-slate-300 text-sm">Application for PIM and/or Building Consent</p>
+                    </div>
+                    <div className="text-right text-sm">
+                      <p className="text-slate-300">Building Act 2004</p>
+                      <p className="text-slate-400">Section 33 or Section 45</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Office Use Only Banner */}
+                <div className="bg-slate-100 px-6 py-2 border-b border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                  <span>OFFICE USE ONLY: Date received, Consent/PIM No., Document No., Valuation No.</span>
+                  <span className="text-slate-400 italic">To be completed by Council</span>
+                </div>
+
+                {/* Form Sections */}
+                <div className="divide-y divide-slate-200">
+                  {Object.entries(formFields).map(([key, section], sectionIdx) => (
+                    <div key={key} className="p-5">
+                      <h4 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <span className="w-7 h-7 bg-violet-100 text-violet-700 rounded-lg flex items-center justify-center text-sm font-bold">
+                          {key === 'section5' ? '5' : sectionIdx + 1}
+                        </span>
+                        {section.title}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {section.fields.map((field, fieldIdx) => (
+                          <div key={fieldIdx} className={`${field.multiline ? 'md:col-span-2' : ''}`}>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">
+                              {field.label}
+                              {field.locked && <span className="ml-1 text-slate-400">(auto)</span>}
+                            </label>
+                            {editMode && !field.locked ? (
+                              field.multiline ? (
+                                <textarea
+                                  defaultValue={field.value}
+                                  rows={3}
+                                  className="w-full px-3 py-2 text-sm rounded-lg border border-violet-300 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-violet-50"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  defaultValue={field.value}
+                                  className="w-full px-3 py-2 text-sm rounded-lg border border-violet-300 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-violet-50"
+                                />
+                              )
+                            ) : (
+                              <div className={`
+                                px-3 py-2 rounded-lg text-sm
+                                ${field.locked ? 'bg-slate-100 text-slate-600' : 'bg-violet-50 text-slate-800 border border-violet-100'}
+                              `}>
+                                {field.value}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Additional Sections Note */}
+                <div className="bg-blue-50 px-6 py-4 border-t border-blue-100">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-700">
+                      <p className="font-medium">Additional sections will be included in final submission:</p>
+                      <ul className="mt-1 space-y-0.5 text-blue-600">
+                        <li>• Section 4: Application type (Building Consent)</li>
+                        <li>• Section 6: Licensed Building Practitioners details</li>
+                        <li>• Section 8: Building Code compliance methods</li>
+                        <li>• Section 10: Attached documents checklist</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form Footer */}
+                <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-violet-100 border border-violet-200 rounded"></div>
+                        <span>AI auto-filled</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 ml-4">
+                        <div className="w-3 h-3 bg-slate-100 border border-slate-200 rounded"></div>
+                        <span>System generated</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-slate-800 transition-colors">
+                        <Download className="w-4 h-4" />
+                        Download PDF
+                      </button>
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-slate-800 transition-colors">
+                        <Eye className="w-4 h-4" />
+                        Full Preview
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-between items-center">
+        <button onClick={onBack} className="flex items-center gap-2 px-5 py-2.5 text-slate-600 hover:text-slate-800 transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+          Back
+        </button>
+        <button
+          onClick={onNext}
+          disabled={generating}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all shadow-lg ${
+            generating 
+              ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+              : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/20'
+          }`}
+        >
+          Continue to Summary
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ===== STEP 9: VALIDATION SUMMARY =====
+const Step9ValidationSummary = ({ data, onNext, onBack }) => {
   const hasWarnings = true; // Demo state
 
   return (
@@ -1288,8 +1549,8 @@ const Step8ValidationSummary = ({ data, onNext, onBack }) => {
   );
 };
 
-// ===== STEP 9: SUBMIT TO COUNCIL =====
-const Step9SubmitToCouncil = ({ data, onBack }) => {
+// ===== STEP 10: SUBMIT TO COUNCIL =====
+const Step10SubmitToCouncil = ({ data, onBack }) => {
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -1473,8 +1734,9 @@ export default function CompliCheckAI() {
     { id: 5, label: 'Upload' },
     { id: 6, label: 'Verification' },
     { id: 7, label: 'Resolve' },
-    { id: 8, label: 'Summary' },
-    { id: 9, label: 'Submit' },
+    { id: 8, label: 'Form 2' },
+    { id: 9, label: 'Summary' },
+    { id: 10, label: 'Submit' },
   ];
 
   const renderStep = () => {
@@ -1494,9 +1756,11 @@ export default function CompliCheckAI() {
       case 7:
         return <Step7ResolveIssues data={data} onNext={() => setCurrentStep(8)} onBack={() => setCurrentStep(6)} />;
       case 8:
-        return <Step8ValidationSummary data={data} onNext={() => setCurrentStep(9)} onBack={() => setCurrentStep(7)} />;
+        return <Step8Form2Preview data={data} onNext={() => setCurrentStep(9)} onBack={() => setCurrentStep(7)} />;
       case 9:
-        return <Step9SubmitToCouncil data={data} onBack={() => setCurrentStep(8)} />;
+        return <Step9ValidationSummary data={data} onNext={() => setCurrentStep(10)} onBack={() => setCurrentStep(8)} />;
+      case 10:
+        return <Step10SubmitToCouncil data={data} onBack={() => setCurrentStep(9)} />;
       default:
         return null;
     }

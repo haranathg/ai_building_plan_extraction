@@ -194,6 +194,137 @@ function ReportDetail() {
     );
   };
 
+  const renderFormField = (label, value) => {
+    if (!value) return null;
+    return (
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">{label}</div>
+        <div className="text-sm text-gray-900">{value}</div>
+      </div>
+    );
+  };
+
+  const renderForm2Section1 = (data) => {
+    if (!data) return null;
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 className="text-xl font-bold text-colab-navy mb-4 pb-3 border-b-2 border-colab-blue">
+          Section 1: Property and Applicant Details
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-sm font-bold text-gray-700 mb-3">Property Information</h4>
+            {renderFormField('Property Address', data.property_address || data.address)}
+            {renderFormField('Legal Description', data.legal_description)}
+            {renderFormField('Certificate of Title', data.certificate_title)}
+            {renderFormField('Valuation Number', data.valuation_number)}
+          </div>
+
+          <div>
+            <h4 className="text-sm font-bold text-gray-700 mb-3">Applicant Information</h4>
+            {renderFormField('Applicant Name', data.applicant_name)}
+            {renderFormField('Contact Person', data.contact_person)}
+            {renderFormField('Phone', data.phone)}
+            {renderFormField('Email', data.email)}
+            {renderFormField('Postal Address', data.postal_address)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderForm2Section2 = (data) => {
+    if (!data) return null;
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 className="text-xl font-bold text-colab-navy mb-4 pb-3 border-b-2 border-colab-blue">
+          Section 2: Type of Application
+        </h3>
+
+        <div className="space-y-4">
+          {renderFormField('Application Type', data.application_type || data.consent_type)}
+          {renderFormField('Reference Number (if amendment)', data.reference_number)}
+
+          {data.application_for && (
+            <div>
+              <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                Application For
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {data.application_for.building_consent && (
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                    Building Consent
+                  </span>
+                )}
+                {data.application_for.pim && (
+                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                    Project Information Memorandum (PIM)
+                  </span>
+                )}
+                {data.application_for.amendment && (
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                    Amendment
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderForm2Section3 = (data) => {
+    if (!data) return null;
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 className="text-xl font-bold text-colab-navy mb-4 pb-3 border-b-2 border-colab-blue">
+          Section 3: Description of Building Work
+        </h3>
+
+        <div className="space-y-4">
+          {renderFormField('Project Description', data.project_description || data.description)}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              {renderFormField('Estimated Value of Work', data.estimated_value)}
+              {renderFormField('Building Use/Classification', data.building_use)}
+              {renderFormField('Number of Storeys', data.num_storeys)}
+              {renderFormField('Floor Area', data.floor_area)}
+            </div>
+
+            <div>
+              {renderFormField('Site Area', data.site_area)}
+              {renderFormField('Building Height', data.building_height)}
+              {renderFormField('Construction Type', data.construction_type)}
+              {renderFormField('Fire Rating Required', data.fire_rating)}
+            </div>
+          </div>
+
+          {data.licensed_practitioners && data.licensed_practitioners.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                Licensed Building Practitioners
+              </div>
+              <div className="space-y-2">
+                {data.licensed_practitioners.map((lbp, idx) => (
+                  <div key={idx} className="bg-gray-50 rounded p-3 text-sm">
+                    <div className="font-semibold text-gray-900">{lbp.name}</div>
+                    <div className="text-gray-600">License: {lbp.license_number} | Class: {lbp.class}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderJsonSection = (title, data) => {
     if (!data) return null;
 
@@ -311,6 +442,11 @@ function ReportDetail() {
             </div>
           </div>
         )}
+
+        {/* Form 2 Sections */}
+        {reportData?.form2_section1 && renderForm2Section1(reportData.form2_section1)}
+        {reportData?.form2_section2 && renderForm2Section2(reportData.form2_section2)}
+        {reportData?.form2_section3 && renderForm2Section3(reportData.form2_section3)}
 
         {/* Report Sections */}
         {reportData?.compliance && renderComplianceReport(reportData.compliance)}

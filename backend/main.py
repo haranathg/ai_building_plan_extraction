@@ -493,6 +493,48 @@ async def get_report_json(precheck_id: str, file_type: str):
     if not report_data:
         raise HTTPException(status_code=404, detail="Report data not found")
 
+    # Add Form 2 sections from precheck basic info
+    if precheck:
+        basic_info = precheck.get('basic_info', {})
+        if basic_info:
+            # Section 1: Property and Applicant Details
+            report_data['form2_section1'] = {
+                'property_address': basic_info.get('address'),
+                'applicant_name': basic_info.get('applicant_name'),
+                'contact_person': basic_info.get('contact_person'),
+                'phone': basic_info.get('phone'),
+                'email': basic_info.get('email'),
+                'legal_description': basic_info.get('legal_description'),
+                'certificate_title': basic_info.get('certificate_title'),
+                'valuation_number': basic_info.get('valuation_number'),
+                'postal_address': basic_info.get('postal_address')
+            }
+
+            # Section 2: Type of Application
+            report_data['form2_section2'] = {
+                'application_type': basic_info.get('consent_type'),
+                'reference_number': basic_info.get('reference_number'),
+                'application_for': {
+                    'building_consent': 'building_consent' in basic_info.get('consent_type', '').lower(),
+                    'pim': 'pim' in basic_info.get('consent_type', '').lower(),
+                    'amendment': 'amendment' in basic_info.get('consent_type', '').lower()
+                }
+            }
+
+            # Section 3: Description of Building Work
+            report_data['form2_section3'] = {
+                'project_description': basic_info.get('project_description'),
+                'estimated_value': basic_info.get('estimated_value'),
+                'building_use': basic_info.get('building_use'),
+                'num_storeys': basic_info.get('num_storeys'),
+                'floor_area': basic_info.get('floor_area'),
+                'site_area': basic_info.get('site_area'),
+                'building_height': basic_info.get('building_height'),
+                'construction_type': basic_info.get('construction_type'),
+                'fire_rating': basic_info.get('fire_rating'),
+                'licensed_practitioners': basic_info.get('licensed_practitioners', [])
+            }
+
     return {
         "success": True,
         "file_type": file_type,
