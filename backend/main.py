@@ -10,6 +10,7 @@ import uuid
 import shutil
 import asyncio
 import subprocess
+import hashlib
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, List
@@ -43,6 +44,22 @@ prechecks: Dict[str, dict] = {}
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+class AccessKeyRequest(BaseModel):
+    access_key: str
+
+# Pre-computed SHA-256 hashes of valid access keys
+VALID_ACCESS_KEY_HASHES = {
+    "f6f44b21ce85a640963fb5961480d40e25935e482ab41e4bfd89f0c0e46660b0": "beta",
+    "e69ae7702e6c795c11fc961db87bb306cfdc66561624a680808b96c24ee1e1aa": "demo",
+    "c48952b075cac2c0eb3c38447719bda30c02cc8827aa5355569eda9d08d14b2e": "preview",
+    "4396313d79e1ada2c4aaf32e45deba911bbdaeca724ae3fcd60a0f25e97eafd1": "beta",
+    "66761307fda975e149931e2a5ca3c34f56526bf34d3e071cc34a2f933d784b29": "test",
+}
+
+def hash_access_key(key: str) -> str:
+    """Hash an access key using SHA-256"""
+    return hashlib.sha256(key.encode()).hexdigest()
 
 class BasicInfoRequest(BaseModel):
     project_description: str
@@ -228,6 +245,22 @@ async def login(request: LoginRequest):
         }
 
     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+@app.post("/api/auth/validate-key")
+async def validate_access_key(request: AccessKeyRequest):
+    """Validate beta access key"""
+    key_hash = hash_access_key(request.access_key)
+
+    if key_hash in VALID_ACCESS_KEY_HASHES:
+        access_level = VALID_ACCESS_KEY_HASHES[key_hash]
+        return {
+            "success": True,
+            "message": "Access granted",
+            "access_level": access_level,
+            "expiry": "2025-12-31"
+        }
+
+    raise HTTPException(status_code=401, detail="Invalid access key")
 
 @app.post("/api/precheck/create", response_model=PreCheckResponse)
 async def create_precheck():

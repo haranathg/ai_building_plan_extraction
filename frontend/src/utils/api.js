@@ -15,6 +15,21 @@ export const login = async (username, password) => {
   return response.data;
 };
 
+export const validateAccessKey = async (accessKey) => {
+  const response = await api.post('/api/auth/validate-key', { access_key: accessKey });
+  return response.data;
+};
+
+export const isAuthenticated = () => {
+  return localStorage.getItem('authenticated') === 'true';
+};
+
+export const logout = () => {
+  localStorage.removeItem('authenticated');
+  localStorage.removeItem('accessLevel');
+  localStorage.removeItem('authExpiry');
+};
+
 // Pre-check API
 export const createPreCheck = async () => {
   const response = await api.post('/api/precheck/create');
