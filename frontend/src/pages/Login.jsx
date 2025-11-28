@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { validateAccessKey } from '../utils/api';
+import urbanCompassLogo from '../assets/urbancompass.jpg';
 
 function Login() {
   const navigate = useNavigate();
@@ -31,7 +32,23 @@ function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-colab-navy to-blue-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
-        {/* Logo */}
+        {/* Urban Compass Logo */}
+        <div className="flex justify-center mb-6">
+          <a
+            href="https://urbancompass.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img
+              src={urbanCompassLogo}
+              alt="Urban Compass"
+              className="h-16 w-auto"
+            />
+          </a>
+        </div>
+
+        {/* CoLabs Logo */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold">
             <span className="text-colab-navy">CO</span>
